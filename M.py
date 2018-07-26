@@ -491,6 +491,18 @@ def mse(res):
     res.scores['mse'] = score
 
 
+def asi_a(res):
+    asi = (np.mean(res.aco[0, 0:len(res.aco[0]) // 2]) - np.mean(res.aco[0, len(res.aco[0]) // 2:])) / (
+        2 * (np.mean(res.aco[0, 0:len(res.aco[0]) // 2]) + np.mean(res.aco[0, len(res.aco[0]) // 2:])))
+    res.scores['asi_a'] = asi
+
+
+def asi_p(res):
+    asi = (np.mean(res.pco[0, 0:len(res.pco[0]) // 2]) - np.mean(res.pco[0, len(res.pco[0]) // 2:])) / (
+        2 * (np.mean(res.pco[0, 0:len(res.pco[0]) // 2]) + np.mean(res.pco[0, len(res.pco[0]) // 2:])))
+    res.scores['asi_p'] = asi
+
+
 ############################## ANALYSIS ##########################
 
 
