@@ -5,8 +5,7 @@ Testing random parameter sets on cluster
 
 """
 
-from Simulation import *
-from Analysis import *
+from M import *
 import Models.m0008 as m
 
 p0 = m.Params(Da=0.28, kon_a=1, koff_a=1, ra=1, Dp=0.15, kon_p=1, koff_p=1, kon_p_2=1, kd_f=1, kd_b=1, rp=1, L=67.3,

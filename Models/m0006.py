@@ -1,5 +1,4 @@
 import numpy as np
-import pickle
 
 """
 Model with dynamic A and P species, detailed mass action description (simple scheme)

@@ -1,5 +1,4 @@
 import numpy as np
-import pickle
 
 """
 Model with Hill functions for antagonism and positive feedback

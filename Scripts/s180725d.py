@@ -6,8 +6,7 @@ Not run yet
 
 """
 
-from Simulation import *
-from Analysis import *
+from M import *
 import Models.m0000 as m
 
 params = ['pA', 'pP']

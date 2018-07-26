@@ -1,5 +1,4 @@
 import numpy as np
-import pickle
 
 """
 Originial model with mass action antagonism and no positive feedback

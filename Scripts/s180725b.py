@@ -4,8 +4,7 @@ Testing m0008
 
 """
 
-from Simulation import *
-from Analysis import *
+from M import *
 import Models.m0008 as m
 
 ######### Single simulation <- good
