@@ -83,3 +83,4 @@ import Models.m0000 as m
 # gen_alg(m=m.Model(m.p0), func=func_genalg_0001, params=params, ranges=ranges, pop=16, gens=5, jobid=4)
 # genalg_plot1(3, [9999, 0, 0])
 
+
