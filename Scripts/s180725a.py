@@ -7,7 +7,7 @@ Testing m0000
 from M import *
 import Models.m0000 as m
 
-########## Single simulation <- good
+########## Single simulaton <- good
 
 # model = m.Model(m.p0)
 # alg_singlesim(model, 2, 0, 0, compression=0)
@@ -82,3 +82,4 @@ import Models.m0000 as m
 # ranges = [[0, 2], [0, 2]]
 # gen_alg(m=m.Model(m.p0), func=func_genalg_0001, params=params, ranges=ranges, pop=16, gens=5, jobid=4)
 # genalg_plot1(3, [9999, 0, 0])
+

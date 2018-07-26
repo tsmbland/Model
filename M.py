@@ -15,8 +15,6 @@ import seaborn as sns
 sns.set()
 sns.set_style("ticks")
 
-os.chdir('%s/../ModelData' % os.path.dirname(os.path.realpath(__file__)))
-
 
 #########################  ALGORITHM FUNCTIONS ##########################
 
@@ -38,16 +36,16 @@ def savedata(res, jobid, subjobid, simid, compression):
     """
 
     # Create job directory
-    if not os.path.isdir('%s' % ('{0:04}'.format(jobid))):
+    if not os.path.isdir('../ModelData/%s' % ('{0:04}'.format(jobid))):
         os.makedirs('%s' % ('{0:04}'.format(jobid)))
 
     # Create subjob directory
-    if not os.path.isdir('%s/%s' % ('{0:04}'.format(jobid), '{0:04}'.format(subjobid))):
+    if not os.path.isdir('../ModelData/%s/%s' % ('{0:04}'.format(jobid), '{0:04}'.format(subjobid))):
         os.makedirs('%s/%s' % ('{0:04}'.format(jobid), '{0:04}'.format(subjobid)))
 
     # Create pickle file
     file = open(
-        '%s/%s/%s.pkl' % ('{0:04}'.format(jobid), '{0:04}'.format(subjobid), '{0:04}'.format(simid)), 'wb')
+        '../ModelData/%s/%s/%s.pkl' % ('{0:04}'.format(jobid), '{0:04}'.format(subjobid), '{0:04}'.format(simid)), 'wb')
 
     # Compress
     if compression == 0:
@@ -66,7 +64,7 @@ def savedata(res, jobid, subjobid, simid, compression):
 
 def loaddata(jobid, subjobid, simid):
     data = open(
-        '%s/%s/%s.pkl' % ('{0:04}'.format(jobid), '{0:04}'.format(subjobid), '{0:04}'.format(simid)),
+        '../ModelData/%s/%s/%s.pkl' % ('{0:04}'.format(jobid), '{0:04}'.format(subjobid), '{0:04}'.format(simid)),
         'rb')
     res = pickle.load(data)
     return res
@@ -498,7 +496,7 @@ def mse(res):
 
 def countsubjobs(jobid):
     count = 0
-    for root, dirs, files in os.walk('%s' % ('{0:04}'.format(jobid))):
+    for root, dirs, files in os.walk('../ModelData/%s' % ('{0:04}'.format(jobid))):
         for d in dirs:
             count += 1
     return count
@@ -506,7 +504,7 @@ def countsubjobs(jobid):
 
 def countsims(jobid, subjobid):
     count = 0
-    for root, dirs, files in os.walk('%s/%s' % ('{0:04}'.format(jobid), '{0:04}'.format(subjobid))):
+    for root, dirs, files in os.walk('../ModelData/%s/%s' % ('{0:04}'.format(jobid), '{0:04}'.format(subjobid))):
         for file in files:
             if file.endswith('.pkl'):
                 count += 1
