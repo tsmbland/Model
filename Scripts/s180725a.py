@@ -76,9 +76,9 @@ import Models.m0000 as m
 
 ########## Genetic algorithm 2
 
-alg_singlesim(m.Model(m.p0), 9999, 0, 0)
-
-params = ['pA', 'pP']
-ranges = [[0, 2], [0, 2]]
+# alg_singlesim(m.Model(m.p0), 9999, 0, 0)
+#
+# params = ['pA', 'pP']
+# ranges = [[0, 2], [0, 2]]
 # gen_alg(m=m.Model(m.p0), func=func_genalg_0001, params=params, ranges=ranges, pop=16, gens=5, jobid=4)
 # genalg_plot1(3, [9999, 0, 0])
