@@ -58,7 +58,7 @@ def savedata(res, jobid, subjobid, simid, compression):
 
     # Save data
     file = open(
-        '%s/%s/%s.pkl' % ('{0:04}'.format(jobid), '{0:04}'.format(subjobid), '{0:04}'.format(simid)), 'wb')
+        '../ModelData/%s/%s/%s.pkl' % ('{0:04}'.format(jobid), '{0:04}'.format(subjobid), '{0:04}'.format(simid)), 'wb')
     pickle.dump(res, file)
 
 
