@@ -484,6 +484,9 @@ def gen_alg_clust(m, func, params, ranges, jobid, cores, nodes, node, innergens=
 ########################## ANALYSIS FUNCTIONS ##########################
 
 def mse(res):
+    if not os.path.exists('../ModelData/9999/0000/0000.pkl'):
+        import Models.m0000 as m
+        alg_singlesim(m.Model(m.p0), 9999, 0, 0)
     base = loaddata(9999, 0, 0)
     mse_a = np.mean(((res.aco - base.aco) ** 2))
     mse_p = np.mean(((res.pco - base.pco) ** 2))
