@@ -37,11 +37,11 @@ def savedata(res, jobid, subjobid, simid, compression):
 
     # Create job directory
     if not os.path.isdir('../ModelData/%s' % ('{0:04}'.format(jobid))):
-        os.makedirs('%s' % ('{0:04}'.format(jobid)))
+        os.makedirs('../ModelData/%s' % ('{0:04}'.format(jobid)))
 
     # Create subjob directory
     if not os.path.isdir('../ModelData/%s/%s' % ('{0:04}'.format(jobid), '{0:04}'.format(subjobid))):
-        os.makedirs('%s/%s' % ('{0:04}'.format(jobid), '{0:04}'.format(subjobid)))
+        os.makedirs('../ModelData/%s/%s' % ('{0:04}'.format(jobid), '{0:04}'.format(subjobid)))
 
     # Create pickle file
     file = open(
@@ -484,9 +484,6 @@ def gen_alg_clust(m, func, params, ranges, jobid, cores, nodes, node, innergens=
 ########################## ANALYSIS FUNCTIONS ##########################
 
 def mse(res):
-    if not os.path.exists('../ModelData/9999/0000/0000.pkl'):
-        import Models.m0000 as m
-        alg_singlesim(m.Model(m.p0), 9999, 0, 0)
     base = loaddata(9999, 0, 0)
     mse_a = np.mean(((res.aco - base.aco) ** 2))
     mse_p = np.mean(((res.pco - base.pco) ** 2))
