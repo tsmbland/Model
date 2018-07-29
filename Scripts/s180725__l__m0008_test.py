@@ -4,8 +4,10 @@ Testing m0008
 
 """
 
-from M import *
-import Models.m0008 as m
+import M as x
+import Models.m0008 as m0008
+
+x.datadirec = '../../ModelData'
 
 ######### Single simulation <- good
 
@@ -53,4 +55,3 @@ import Models.m0008 as m
 # gen_alg(m=m.Model(m.p0), func=func_genalg_0000, params=params, ranges=ranges, pop=8, gens=2, jobid=3)
 #
 # sliderplot(3, 0, 0)
-

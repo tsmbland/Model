@@ -250,6 +250,7 @@ class Model:
     class Res:
         def __init__(self, params):
             self.params = params
+            self.scores = {}
 
             self.amn = np.zeros([int(self.params.Tmax / self.params.deltat) + 1, self.params.xsteps])
             self.amm = np.zeros([int(self.params.Tmax / self.params.deltat) + 1, self.params.xsteps])

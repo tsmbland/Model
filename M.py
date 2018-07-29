@@ -15,8 +15,10 @@ import seaborn as sns
 sns.set()
 sns.set_style("ticks")
 
-
 #########################  ALGORITHM FUNCTIONS ##########################
+
+
+datadirec = None
 
 
 class Compression2:
@@ -36,16 +38,17 @@ def savedata(res, jobid, subjobid, simid, compression):
     """
 
     # Create job directory
-    if not os.path.isdir('../ModelData/%s' % ('{0:04}'.format(jobid))):
-        os.makedirs('../ModelData/%s' % ('{0:04}'.format(jobid)))
+    if not os.path.isdir('%s/%s' % (datadirec, '{0:04}'.format(jobid))):
+        os.makedirs('%s/%s' % (datadirec, '{0:04}'.format(jobid)))
 
     # Create subjob directory
-    if not os.path.isdir('../ModelData/%s/%s' % ('{0:04}'.format(jobid), '{0:04}'.format(subjobid))):
-        os.makedirs('../ModelData/%s/%s' % ('{0:04}'.format(jobid), '{0:04}'.format(subjobid)))
+    if not os.path.isdir('%s/%s/%s' % (datadirec, '{0:04}'.format(jobid), '{0:04}'.format(subjobid))):
+        os.makedirs('%s/%s/%s' % (datadirec, '{0:04}'.format(jobid), '{0:04}'.format(subjobid)))
 
     # Create pickle file
     file = open(
-        '../ModelData/%s/%s/%s.pkl' % ('{0:04}'.format(jobid), '{0:04}'.format(subjobid), '{0:04}'.format(simid)), 'wb')
+        '%s/%s/%s/%s.pkl' % (datadirec, '{0:04}'.format(jobid), '{0:04}'.format(subjobid), '{0:04}'.format(simid)),
+        'wb')
 
     # Compress
     if compression == 0:
@@ -59,7 +62,7 @@ def savedata(res, jobid, subjobid, simid, compression):
 
 def loaddata(jobid, subjobid, simid):
     data = open(
-        '../ModelData/%s/%s/%s.pkl' % ('{0:04}'.format(jobid), '{0:04}'.format(subjobid), '{0:04}'.format(simid)),
+        '%s/%s/%s/%s.pkl' % (datadirec, '{0:04}'.format(jobid), '{0:04}'.format(subjobid), '{0:04}'.format(simid)),
         'rb')
     res = pickle.load(data)
     return res
@@ -480,21 +483,21 @@ def gen_alg_clust(m, func, params, ranges, jobid, cores, nodes, node, innergens=
 
 def mse(res):
     base = loaddata(9999, 0, 0)
-    mse_a = np.mean(((res.aco - base.aco) ** 2))
-    mse_p = np.mean(((res.pco - base.pco) ** 2))
+    mse_a = np.mean(((res.aco[-1, :] - base.aco[-1, :]) ** 2))
+    mse_p = np.mean(((res.pco[-1, :] - base.pco[-1, :]) ** 2))
     score = np.mean([mse_a, mse_p])
     res.scores['mse'] = score
 
 
 def asi_a(res):
-    asi = (np.mean(res.aco[0, 0:len(res.aco[0]) // 2]) - np.mean(res.aco[0, len(res.aco[0]) // 2:])) / (
-        2 * (np.mean(res.aco[0, 0:len(res.aco[0]) // 2]) + np.mean(res.aco[0, len(res.aco[0]) // 2:])))
+    asi = (np.mean(res.aco[-1, 0:len(res.aco[-1, :]) // 2]) - np.mean(res.aco[-1, len(res.aco[-1, :]) // 2:])) / (
+        2 * (np.mean(res.aco[-1, 0:len(res.aco[-1, :]) // 2]) + np.mean(res.aco[-1, len(res.aco[-1, :]) // 2:])))
     res.scores['asi_a'] = asi
 
 
 def asi_p(res):
-    asi = (np.mean(res.pco[0, 0:len(res.pco[0]) // 2]) - np.mean(res.pco[0, len(res.pco[0]) // 2:])) / (
-        2 * (np.mean(res.pco[0, 0:len(res.pco[0]) // 2]) + np.mean(res.pco[0, len(res.pco[0]) // 2:])))
+    asi = (np.mean(res.pco[-1, 0:len(res.pco[-1, :]) // 2]) - np.mean(res.pco[-1, len(res.pco[-1, :]) // 2:])) / (
+        2 * (np.mean(res.pco[-1, 0:len(res.pco[-1, :]) // 2]) + np.mean(res.pco[-1, len(res.pco[-1, :]) // 2:])))
     res.scores['asi_p'] = asi
 
 
@@ -509,7 +512,7 @@ def print_scores_batch(jobid, subjobid, simids):
 
 def countsubjobs(jobid):
     count = 0
-    for root, dirs, files in os.walk('../ModelData/%s' % ('{0:04}'.format(jobid))):
+    for root, dirs, files in os.walk('%s/%s' % (datadirec, '{0:04}'.format(jobid))):
         for d in dirs:
             count += 1
     return count
@@ -517,58 +520,11 @@ def countsubjobs(jobid):
 
 def countsims(jobid, subjobid):
     count = 0
-    for root, dirs, files in os.walk('../ModelData/%s/%s' % ('{0:04}'.format(jobid), '{0:04}'.format(subjobid))):
+    for root, dirs, files in os.walk('%s/%s/%s' % (datadirec, '{0:04}'.format(jobid), '{0:04}'.format(subjobid))):
         for file in files:
             if file.endswith('.pkl'):
                 count += 1
     return count
-
-
-# def stats_batch(job, subjobs):
-#     nsubjobs = len(subjobs)
-#
-#     res = loaddata(jobid=job, subjobid=0)
-#     tsteps = int(res.Tmax / res.deltat) + 1
-#
-#     class data:
-#         asi = np.zeros([nsubjobs, tsteps])
-#         a_cyt = np.zeros([nsubjobs, tsteps])
-#         a_mem = np.zeros([nsubjobs, tsteps])
-#         a_mem_cyt = np.zeros([nsubjobs, tsteps])
-#         a_size = np.zeros([nsubjobs, tsteps])
-#         p_cyt = np.zeros([nsubjobs, tsteps])
-#         p_mem = np.zeros([nsubjobs, tsteps])
-#         p_mem_cyt = np.zeros([nsubjobs, tsteps])
-#         p_size = np.zeros([nsubjobs, tsteps])
-#         subjob = np.zeros([nsubjobs, tsteps])
-#
-#     class labels:
-#         asi = 'Asymmetry index'
-#         a_cyt = 'A cytoplasmic concentration [μm⁻³]'
-#         a_mem = 'A domain concentration [μm⁻²]'
-#         a_mem_cyt = 'A membrane:cytoplasmic ratio'
-#         a_size = 'A domain size [μm]'
-#         p_cyt = 'P cytoplasmic concentration [μm⁻³]'
-#         p_mem = 'P domain concentration [μm⁻²]'
-#         p_mem_cyt = 'P membrane;cytoplasmic ratio'
-#         p_size = 'P domain size [μm]'
-#
-#     for subjob in range(nsubjobs):
-#         res = loaddata(jobid=job, subjobid=subjobs[subjob])
-#         data.asi[subjob, :] = (2 * np.sum((np.sign(res.aco - res.pco) + 1) / 2, axis=1) - res.p.xsteps) / res.p.xsteps
-#         data.a_mem[subjob, :] = np.amax(res.aco, axis=1)
-#         data.a_cyt[subjob, :] = (res.p.pA - res.p.psi * np.mean(res.aco, axis=1))
-#         data.a_mem_cyt[subjob, :] = data.a_mem[subjob] / data.a_cyt[subjob]
-#         data.a_size[subjob, :] = np.sum(res.aco.transpose() > (0.5 * np.tile(data.a_mem[subjob], [res.p.xsteps, 1])),
-#                                         axis=0) * res.p.L / res.p.xsteps
-#         data.p_mem[subjob, :] = np.amax(res.pco, axis=1)
-#         data.p_cyt[subjob, :] = (res.p.pA - res.p.psi * np.mean(res.aco, axis=1))
-#         data.p_mem_cyt[subjob, :] = data.p_mem[subjob] / data.p_cyt[subjob]
-#         data.p_size[subjob, :] = np.sum(res.pco.transpose() > (0.5 * np.tile(data.p_mem[subjob], [res.p.xsteps, 1])),
-#                                         axis=0) * res.p.L / res.p.xsteps
-#         data.subjob[subjob, :] = subjob
-#
-#     return data, labels
 
 
 def stats(res):

@@ -7,7 +7,7 @@ Model with pPAR membrane binding receptor
 
 
 class Params:
-    def __init__(self, pA, Da, konA, koffA, kAP, ePneg, pP, Dp, konP, koffP, kPA, ePA, pS, Ds, konS, koffS, kSA, eSA, L,
+    def __init__(self, pA, Da, konA, koffA, kAP, eAP, pP, Dp, konP, koffP, kPA, ePA, pS, Ds, konS, koffS, kSA, eSA, L,
                  xsteps, psi, Tmax, deltat):
         ######### A ##########
         self.pA = pA  # um-3
@@ -15,7 +15,7 @@ class Params:
         self.konA = konA  # um s-1
         self.koffA = koffA  # s-1
         self.kAP = kAP
-        self.ePneg = ePneg
+        self.eAP = eAP
 
         ######### P ##########
         self.pP = pP  # um-3
@@ -78,7 +78,7 @@ class Model:
         pcyt = (self.params.pP - self.params.psi * np.mean(self.p))
         scyt = (self.params.pS - self.params.psi * np.mean(self.s))
 
-        r = np.zeros([12])
+        r = [None] * 12
         r[0] = self.params.konA * acyt
         r[1] = self.params.koffA * self.a[lb:ub]
         r[2] = self.params.kAP * self.a[lb:ub] * (self.p[lb:ub] ** self.params.eAP)
@@ -99,14 +99,14 @@ class Model:
 
         return diff
 
-    def update_a(self, r):
-        self.a += (r[0] - r[1] - r[2] + r[3]) * self.params.deltat
+    def update_a(self, r, lb , ub):
+        self.a[lb:ub] += (r[0] - r[1] - r[2] + r[3]) * self.params.deltat
 
-    def update_p(self, r):
-        self.a += (r[4] - r[5] - r[6] + r[7]) * self.params.deltat
+    def update_p(self, r, lb, ub):
+        self.p[lb:ub] += (r[4] - r[5] - r[6] + r[7]) * self.params.deltat
 
-    def update_s(self, r):
-        self.a += (r[8] - r[9] - r[10] + r[11]) * self.params.deltat
+    def update_s(self, r, lb, ub):
+        self.s[lb:ub] += (r[8] - r[9] - r[10] + r[11]) * self.params.deltat
 
     def get_all(self):
         return [self.a, self.p, self.s]
@@ -114,21 +114,18 @@ class Model:
     def run(self):
         for t in range(int(self.params.Tmax / self.params.deltat)):
             r1 = self.reactions(0, self.params.xsteps // 2)
-            self.update_a(r1)
-            self.update_p(r1)
-            self.update_s(r1)
+            self.update_a(r1, 0, self.params.xsteps // 2)
 
             r2 = self.reactions(self.params.xsteps // 2, self.params.xsteps)
-            self.update_a(r2)
-            self.update_p(r2)
-            self.update_s(r2)
+            self.update_p(r2, self.params.xsteps // 2, self.params.xsteps)
+            self.update_s(r2, self.params.xsteps // 2, self.params.xsteps)
         self.res.update(-1, self.get_all())
 
         for t in range(int(self.params.Tmax / self.params.deltat)):
             r = self.reactions(0, self.params.xsteps)
-            self.update_a(r)
-            self.update_p(r)
-            self.update_s(r)
+            self.update_a(r, 0, self.params.xsteps)
+            self.update_p(r, 0, self.params.xsteps)
+            self.update_s(r, 0, self.params.xsteps)
             self.res.update(t, self.get_all())
 
         return self.res
@@ -136,6 +133,7 @@ class Model:
     class Res:
         def __init__(self, params):
             self.params = params
+            self.scores = {}
             self.a = np.zeros([int(self.params.Tmax / self.params.deltat) + 1, self.params.xsteps])
             self.p = np.zeros([int(self.params.Tmax / self.params.deltat) + 1, self.params.xsteps])
             self.s = np.zeros([int(self.params.Tmax / self.params.deltat) + 1, self.params.xsteps])
@@ -158,6 +156,6 @@ class Model:
             self.pco = np.asarray([self.pco[-1, :], ])
 
 
-# p0 = Params(pA=1, Da=1, konA=, koffA=, kAP=, ePneg=1, pP=1, Dp=1, konP=, koffP=, kPA=, ePA=1, pS=1, Ds=1, konS=, koffS=,
-#             kSA=, eSA=2, L=67.3, xsteps=500, psi=0.174, Tmax=10, deltat=0.1)
+p0 = Params(pA=1.56, Da=0.28, konA=1, koffA=1, kAP=1, eAP=1, pP=1, Dp=0.15, konP=1, koffP=1, kPA=1, ePA=2, pS=1,
+              Ds=0, konS=1, koffS=1, kSA=1, eSA=2, L=67.3, xsteps=500, psi=0.174, Tmax=1000, deltat=0.01)
 

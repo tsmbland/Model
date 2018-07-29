@@ -115,6 +115,7 @@ class Model:
     class Res:
         def __init__(self, p):
             self.params = p
+            self.scores = {}
             self.aco = np.zeros([int(self.params.Tmax / self.params.deltat) + 1, self.params.xsteps])
             self.pco = np.zeros([int(self.params.Tmax / self.params.deltat) + 1, self.params.xsteps])
 

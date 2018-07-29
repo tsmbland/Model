@@ -4,14 +4,16 @@ Testing m0000
 
 """
 
-from M import *
-import Models.m0000 as m
+import M as x
+import Models.m0000 as m0000
+
+x.datadirec = '../../ModelaData'
 
 ########## Single simulaton <- good
 
-# model = m.Model(m.p0)
-# alg_singlesim(model, 2, 0, 0, compression=0)
-# sliderplot(2, 0, 0)
+model = m0000.Model(m0000.p0)
+x.alg_singlesim(model, 2, 0, 0, compression=0)
+x.sliderplot(2, 0, 0)
 #
 # model = m.Model(m.p0)
 # model.params.pA = 0
@@ -60,7 +62,7 @@ import Models.m0000 as m
 
 params = ['pA', 'pP']
 ranges = [[0, 2], [0, 2]]
-alg_parsim_rand(m.Model(m.p0), params=params, ranges=ranges, nsims=4, jobid=2, subjobid=2, compression=2, funcs=[mse, asi_a, asi_p])
+alg_parsim_rand(m0000.Model(m0000.p0), params=params, ranges=ranges, nsims=4, jobid=2, subjobid=2, compression=2, funcs=[mse, asi_a, asi_p])
 print(loaddata(2, 2, 0).params.pA)
 print(loaddata(2, 2, 0).params.pP)
 print(loaddata(2, 2, 0).scores)
