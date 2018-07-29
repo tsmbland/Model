@@ -13,7 +13,7 @@ x.datadirec = '../working/Tom/ModelData'
 
 p0 = m0000.Params(Da=0.28, Dp=0.15, konA=0.0085, koffA=0.0054, konP=0.0474, koffP=0.0073, kAP=0.19, kPA=2, ePneg=1,
                   eAneg=2,
-                  pA=1.56, pP=1, L=67.3, xsteps=500, psi=0.174, Tmax=100, deltat=0.1, Aeqmin=0, Aeqmax=0.5, Peqmin=0.5,
+                  pA=1.56, pP=1, L=67.3, xsteps=500, psi=0.174, Tmax=1000, deltat=0.01, Aeqmin=0, Aeqmax=0.5, Peqmin=0.5,
                   Peqmax=1)
 
 params = ['konA', 'koffA', 'konP', 'koffP', 'kAP', 'kPA']
