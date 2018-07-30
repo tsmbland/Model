@@ -2,7 +2,7 @@
 
 #SBATCH --time=0
 #SBATCH --cpus-per-task=32
-#SBATCH --array=0-1
+#SBATCH --array=0-29
 
 module load Python/3.5.2-foss-2016b
 

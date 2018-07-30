@@ -11,9 +11,10 @@ x.datadirec = '../../ModelData'
 
 ######### Single simulation <- good
 
-# model = m.Model(m.p0)
-# alg_singlesim(model, 2, 0, 0, compression=0)
-# sliderplot(2, 0, 0)
+model = m0008.Model(m0008.p0)
+x.alg_singlesim(model, 5, 0, 0, compression=0, funcs=[x.mse, x.asi_a, x.asi_p])
+x.sliderplot(5, 0, 0)
+
 
 
 ########## Data compression <- good

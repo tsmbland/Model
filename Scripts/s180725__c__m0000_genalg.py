@@ -14,5 +14,5 @@ x.datadirec = '../working/Tom/ModelData'
 
 params = ['pA', 'pP']
 ranges = [[0, 2], [0, 2]]
-x.gen_alg_clust(m=m0000.Model(m0000.p0), func=x.func_genalg_0000, params=params, ranges=ranges, jobid=3, cores=32, innergens=3,
+x.gen_alg_clust(m=m0000.Model(m0000.p0), func=x.func_genalg_0000, params=params, ranges=ranges, jobid=..., cores=32, innergens=3,
                 node=int(sys.argv[1]), nodes=int(sys.argv[2]))
