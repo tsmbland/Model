@@ -304,3 +304,10 @@ class Model:
 
             self.aco = np.asarray([self.aco[-1, :], ])
             self.pco = np.asarray([self.pco[-1, :], ])
+
+
+p0 = Params(Da=0.28, konan=1, koffan=1, konam=1, koffam=1, konap=1, koffap=1, kphosan=1, kphosam=1, kdephosap=1,
+            kdephosam=1, Dp=0.15,
+            konpn=1, koffpn=1, konpm=1, koffpm=1, konpp=1, koffpp=1, kphospn=1, kphospm=1, kdephospp=1, kdephospm=1,
+            L=67.3,
+            xsteps=500, psi=0.174, Tmax=100, deltat=0.01, starts=[0, 0, 0, 1.56, 0, 0, 0, 0, 0, 1, 0, 0])
