@@ -11,6 +11,8 @@ import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider
 from matplotlib import animation
 import seaborn as sns
+import glob
+import pandas as pd
 
 sns.set()
 sns.set_style("ticks")
@@ -20,11 +22,31 @@ sns.set_style("ticks")
 
 datadirec = None
 
+"""
+From local to server: '../../../../../../../Volumes/lab-goehringn/working/Tom/ModelData'
+
+From server to server: '../working/Tom/ModelData'
+
+From local to local: '../../ModelData'
+"""
+
 
 class Compression2:
     def __init__(self, res):
         self.scores = res.scores
         self.params = res.params
+
+
+def subjobslist(jobid):
+    dlist = glob.glob('%s/%s/*/' % (datadirec, '{0:04}'.format(jobid)))
+    dlist = [os.path.basename(os.path.normpath(x))[:-4] for x in dlist if '!' not in x]
+    return dlist
+
+
+def simidlist(jobid, subjobid):
+    slist = glob.glob('%s/%s/%s/*.pkl' % (datadirec, '{0:04}'.format(jobid), '{0:04}'.format(subjobid)))
+    slist = [int(os.path.basename(os.path.normpath(x))[:-4]) for x in slist if '!' not in x]
+    return slist
 
 
 def savedata(res, jobid, subjobid, simid, compression):
@@ -454,7 +476,7 @@ def gen_alg_clust(m, func, params, ranges, jobid, cores, nodes, node, innergens=
     """
 
     # Import/create parameter set
-    gen = countsubjobs(jobid)
+    gen = len(subjobslist(jobid))
     if gen != 0:
         valsarray = np.zeros([cores * nodes, len(params)])
         scores = np.zeros([cores * nodes])
@@ -490,41 +512,49 @@ def mse(res):
 
 
 def asi_a(res):
-    asi = (np.mean(res.aco[-1, 0:len(res.aco[-1, :]) // 2]) - np.mean(res.aco[-1, len(res.aco[-1, :]) // 2:])) / (
-        2 * (np.mean(res.aco[-1, 0:len(res.aco[-1, :]) // 2]) + np.mean(res.aco[-1, len(res.aco[-1, :]) // 2:])))
+    ant = np.mean(res.aco[-1, 0:len(res.aco[-1, :]) // 2])
+    post = np.mean(res.aco[-1, len(res.aco[-1, :]) // 2:])
+    asi = (ant - post) / (2 * (ant + post))
     res.scores['asi_a'] = asi
 
 
 def asi_p(res):
-    asi = (np.mean(res.pco[-1, 0:len(res.pco[-1, :]) // 2]) - np.mean(res.pco[-1, len(res.pco[-1, :]) // 2:])) / (
-        2 * (np.mean(res.pco[-1, 0:len(res.pco[-1, :]) // 2]) + np.mean(res.pco[-1, len(res.pco[-1, :]) // 2:])))
+    ant = np.mean(res.pco[-1, 0:len(res.pco[-1, :]) // 2])
+    post = np.mean(res.pco[-1, len(res.pco[-1, :]) // 2:])
+    asi = (ant - post) / (2 * (ant + post))
     res.scores['asi_p'] = asi
 
 
-def print_scores_batch(jobid, subjobid, simids):
-    for simid in simids:
+def print_scores_batch(jobid, subjobid):
+    for simid in simidlist(jobid, subjobid):
         r = loaddata(jobid, subjobid, simid)
         print([simid, r.scores])
 
 
+def save_scores_batch(jobid, subjobid):
+    df = pd.DataFrame()
+    for simid in simidlist(jobid, subjobid):
+        try:
+            print(simid)
+            r = loaddata(jobid, subjobid, simid)
+            columns = ['simid']
+            vals = [simid]
+            for key, value in r.scores.items():
+                columns.append(key)
+                vals.append(value)
+            row = pd.DataFrame([vals], columns=columns)
+            df = df.append(row)
+        except:
+            pass
+
+    df.to_csv('%s/res.csv' % direc_to(jobid, subjobid))
+
+
+def direc_to(jobid, subjobid):
+    return '%s/%s/%s' % (datadirec, '{0:04}'.format(jobid), '{0:04}'.format(subjobid))
+
+
 ############################## ANALYSIS ##########################
-
-
-def countsubjobs(jobid):
-    count = 0
-    for root, dirs, files in os.walk('%s/%s' % (datadirec, '{0:04}'.format(jobid))):
-        for d in dirs:
-            count += 1
-    return count
-
-
-def countsims(jobid, subjobid):
-    count = 0
-    for root, dirs, files in os.walk('%s/%s/%s' % (datadirec, '{0:04}'.format(jobid), '{0:04}'.format(subjobid))):
-        for file in files:
-            if file.endswith('.pkl'):
-                count += 1
-    return count
 
 
 def stats(res):
@@ -640,7 +670,7 @@ def anim(jobid=0, subjobid=0, simid=0, animrate=100, framerate=24):
 
 
 def paramsliderplot(jobid, subjobid, param):
-    sims = countsims(jobid, subjobid)
+    sims = len(simidlist(jobid, subjobid))
     xsteps = loaddata(jobid=jobid, subjobid=subjobid, simid=0).p.xsteps
     params = np.zeros(sims)
     aco = np.zeros([sims, xsteps])
@@ -671,7 +701,7 @@ def paramsliderplot(jobid, subjobid, param):
 
 
 def paramsliderplot2(jobid, subjobid, param1, param2):
-    sims = countsims(jobid, subjobid)
+    sims = len(simidlist(jobid, subjobid))
     xsteps = loaddata(jobid, subjobid, 0).p.xsteps
     param1vals = np.zeros(sims)
     param2vals = np.zeros(sims)
@@ -708,7 +738,7 @@ def paramsliderplot2(jobid, subjobid, param1, param2):
 
 
 def dataplot(jobid, subjobid, param, var):
-    sims = countsims(jobid, subjobid)
+    sims = len(simidlist(jobid, subjobid))
     (d, labels) = stats_batch(jobid, range(sims))
     paramvals = np.zeros(sims)
 
@@ -723,7 +753,7 @@ def dataplot(jobid, subjobid, param, var):
 
 
 def dataplot2(jobid, subjobid, param1, param2, var):
-    sims = countsims(jobid, subjobid)
+    sims = len(simidlist(jobid, subjobid))
     (d, labels) = stats_batch(jobid, range(sims))
     param1vals = np.zeros(sims)
     param2vals = np.zeros(sims)
@@ -750,7 +780,7 @@ def dataplot2(jobid, subjobid, param1, param2, var):
 
 
 def dataplot2_heatmap(jobid, subjobid, param1, param2, var):
-    sims = countsims(jobid, subjobid)
+    sims = len(simidlist(jobid, subjobid))
     (d, labels) = stats_batch(jobid, range(sims))
     param1vals = np.zeros(sims)
     param2vals = np.zeros(sims)
@@ -769,7 +799,7 @@ def dataplot2_heatmap(jobid, subjobid, param1, param2, var):
 
 
 def dataplot2_heatmap_180220(jobid, subjobid, param1, param2, var):
-    sims = countsims(jobid, subjobid)
+    sims = len(simidlist(jobid, subjobid))
     (d, labels) = stats_batch(jobid, range(sims))
 
     param1vals = np.zeros(sims)
@@ -792,7 +822,7 @@ def dataplot2_heatmap_180220(jobid, subjobid, param1, param2, var):
 
 
 def dataplot2_heatmap_180529(jobid, subjobid, param1, param2):
-    sims = countsims(jobid, subjobid)
+    sims = len(simidlist(jobid, subjobid))
 
     param1vals = np.zeros(sims)
     param2vals = np.zeros(sims)
@@ -815,7 +845,7 @@ def dataplot2_heatmap_180529(jobid, subjobid, param1, param2):
 
 
 def genalg_plot1(jobid, base=None):
-    nsubjobs = countsubjobs(jobid)
+    nsubjobs = len(subjobslist(jobid))
 
     plt.clf()
     fig = plt.figure()
@@ -827,7 +857,7 @@ def genalg_plot1(jobid, base=None):
     def update_slider(val):
         ax.clear()
         subjobid = int(sframe.val)
-        nsims = countsims(jobid, subjobid)
+        nsims = len(simidlist(jobid, subjobid))
 
         # Plot base data
         if base is not None:
@@ -861,7 +891,7 @@ def genalg_spider(jobid, subjobid, params):
     ax.set_rlabel_position(0)
 
     # Plot data
-    nsims = countsims(jobid, subjobid)
+    nsims = len(simidlist(jobid, subjobid))
     for simid in range(nsims):
         values = np.zeros(len(params) + 1)
         res = loaddata(jobid, subjobid, simid)
@@ -873,7 +903,7 @@ def genalg_spider(jobid, subjobid, params):
 
 
 def genalg_spider_slider(jobid, params):
-    nsubjobs = countsubjobs(jobid)
+    nsubjobs = len(subjobslist(jobid))
 
     plt.clf()
     fig = plt.figure()
@@ -891,7 +921,7 @@ def genalg_spider_slider(jobid, params):
         ax.set_rlabel_position(0)
 
         # Plot data
-        nsims = countsims(jobid, subjobid)
+        nsims = len(simidlist(jobid, subjobid))
         for simid in range(nsims):
             values = np.zeros(len(params) + 1)
             res = loaddata(jobid, subjobid, simid)
