@@ -114,7 +114,7 @@ def params_array_rand(params, ranges, seeds, nsims):
     for param in range(len(params)):
         for simid in range(nsims):
             random.seed((1 + simid) * seeds[param])
-            valsarray[simid, param] = random.uniform(ranges[param][0], ranges[param][1])
+            valsarray[simid, param] = 10 ** random.uniform(np.log10(ranges[param][0]), np.log10(ranges[param][1]))
 
     return valsarray
 

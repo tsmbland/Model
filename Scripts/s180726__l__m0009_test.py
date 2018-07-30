@@ -9,11 +9,11 @@ import Models.m0009 as m0009
 
 x.datadirec = '../../ModelData'
 
-########## Single simulaton <- good
+######### Single simulaton <- good
 
-# model = m.Model(m.p0)
-# alg_singlesim(model, 2, 0, 0, compression=0)
-# sliderplot(2, 0, 0)
+model = m0009.Model(m0009.p0)
+x.alg_singlesim(model, 2, 0, 0, compression=0)
+x.sliderplot(2, 0, 0)
 
 
 
