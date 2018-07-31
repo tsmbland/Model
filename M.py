@@ -414,6 +414,7 @@ def alg_parsim_clust_duplicate(m, changes, oldjobid, oldsubjobid, newjobid, news
     """
 
     oldsimids = simidlist(oldjobid, oldsubjobid)
+    print(oldsimids)
 
     # Allocate subjobs to node
     subjobmin = node * cores
@@ -603,7 +604,6 @@ def save_scores_batch(jobid, subjobid):
     df = pd.DataFrame()
     for simid in simidlist(jobid, subjobid):
         try:
-            print(simid)
             r = loaddata(jobid, subjobid, simid)
             columns = ['simid']
             vals = [simid]
