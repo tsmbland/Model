@@ -2,6 +2,7 @@ import numpy as np
 
 """
 Model with pPAR membrane binding receptor
+INCOMPLETE
 
 """
 

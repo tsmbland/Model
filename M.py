@@ -163,6 +163,36 @@ def func_parsim(m, params, vals, jobid, subjobid, simid, nsims, compression, fun
         alg_singlesim(m, jobid, subjobid, simid, compression, funcs)
 
 
+def func_parsim_dup(m, changes, oldjobid, oldsubjobid, oldsimid, newjobid, newsubjobid, compression, funcs=[]):
+    """
+
+    :param m:
+    :param changes:
+    :param oldjobid:
+    :param oldsubjobid:
+    :param oldsimid:
+    :param newjobid:
+    :param newsubjobid:
+    :param nsims:
+    :param compression:
+    :param funcs:
+    :return:
+    """
+
+    # Initiate new model
+    m = copy.deepcopy(m)
+
+    # Load parameters
+    m.params = loaddata(oldjobid, oldsubjobid, oldsimid).params
+
+    # Make changes
+    for key, value in changes.items():
+        setattr(m.params, key, value)
+
+    # Run model
+    alg_singlesim(m, newjobid, newsubjobid, oldsimid, compression, funcs)
+
+
 def func_genalg_0000(m, params, vals, jobid, subjobid, simid, pop):
     """
     Performs simulation(s) with given parameters, calculates score based on performance
@@ -366,6 +396,35 @@ def alg_parsim_clust(m, params, vals, jobid, subjobid, cores, node, compression=
         in range(subjobmin, subjobmax))
 
 
+def alg_parsim_clust_duplicate(m, changes, oldjobid, oldsubjobid, newjobid, newsubjobid, cores, node, compression=1,
+                               funcs=[]):
+    """
+
+    :param m:
+    :param changes:
+    :param oldjobid:
+    :param oldsubjobid:
+    :param newjobid:
+    :param newsubjobid:
+    :param cores:
+    :param node:
+    :param compression:
+    :param funcs:
+    :return:
+    """
+
+    oldsimids = simidlist(oldjobid, oldsubjobid)
+
+    # Allocate subjobs to node
+    subjobmin = node * cores
+    subjobmax = (node + 1) * cores
+
+    # Run simulations
+    Parallel(n_jobs=cores)(
+        delayed(func_parsim_dup)(m, changes, oldjobid, oldsubjobid, oldsimids[i], newjobid, newsubjobid, compression,
+                                 funcs=[]) for i in range(subjobmin, subjobmax))
+
+
 def alg_parsim_rand(m, params, ranges, nsims, jobid=0, subjobid=0, cores=multiprocessing.cpu_count(), seeds=None,
                     compression=1, funcs=[]):
     """
@@ -503,12 +562,21 @@ def gen_alg_clust(m, func, params, ranges, jobid, cores, nodes, node, innergens=
 
 ########################## ANALYSIS FUNCTIONS ##########################
 
-def mse(res):
+def mse_0(res):
     base = loaddata(9999, 0, 0)
-    mse_a = np.mean(((res.aco[-1, :] - base.aco[-1, :]) ** 2))
-    mse_p = np.mean(((res.pco[-1, :] - base.pco[-1, :]) ** 2))
+    mse_a = np.mean(((res.aco[-1, :] - base.aco) ** 2))
+    mse_p = np.mean(((res.pco[-1, :] - base.pco) ** 2))
     score = np.mean([mse_a, mse_p])
-    res.scores['mse'] = score
+    res.scores['mse_0'] = score
+
+
+def mse_1(res):
+    base0 = loaddata(9999, 0, 0)  # polarised
+    base1 = loaddata(9999, 0, 1)  # uniform
+    mse_a = np.mean(((res.aco[-1, :] - base1.aco) ** 2))
+    mse_p = np.mean(((res.pco[-1, :] - base0.pco) ** 2))
+    score = np.mean([mse_a, mse_p])
+    res.scores['mse_1'] = score
 
 
 def asi_a(res):
@@ -522,7 +590,7 @@ def asi_p(res):
     ant = np.mean(res.pco[-1, 0:len(res.pco[-1, :]) // 2])
     post = np.mean(res.pco[-1, len(res.pco[-1, :]) // 2:])
     asi = (ant - post) / (2 * (ant + post))
-    res.scores['asi_p'] = asi
+    res.scores[asi_p] = asi
 
 
 def print_scores_batch(jobid, subjobid):
@@ -557,45 +625,45 @@ def direc_to(jobid, subjobid):
 ############################## ANALYSIS ##########################
 
 
-def stats(res):
-    tsteps = int(res.p.Tmax / res.p.deltat) + 1
-
-    class data:
-        asi = np.zeros([tsteps])
-        a_cyt = np.zeros([tsteps])
-        a_mem = np.zeros([tsteps])
-        a_mem_cyt = np.zeros([tsteps])
-        a_size = np.zeros([tsteps])
-        p_cyt = np.zeros([tsteps])
-        p_mem = np.zeros([tsteps])
-        p_mem_cyt = np.zeros([tsteps])
-        p_size = np.zeros([tsteps])
-        subjob = np.zeros([tsteps])
-
-    class labels:
-        asi = 'Asymmetry index'
-        a_cyt = 'A cytoplasmic concentration [μm⁻³]'
-        a_mem = 'A domain concentration [μm⁻²]'
-        a_mem_cyt = 'A membrane:cytoplasmic ratio'
-        a_size = 'A domain size [μm]'
-        p_cyt = 'P cytoplasmic concentration [μm⁻³]'
-        p_mem = 'P domain concentration [μm⁻²]'
-        p_mem_cyt = 'P membrane;cytoplasmic ratio'
-        p_size = 'P domain size [μm]'
-
-    data.asi = (2 * np.sum((np.sign(res.aco - res.pco) + 1) / 2, axis=1) - res.p.xsteps) / res.p.xsteps
-    data.a_mem = np.amax(res.aco, axis=1)
-    data.a_cyt = (res.p.pA - res.p.psi * np.mean(res.aco, axis=1))
-    data.a_mem_cyt = data.a_mem / data.a_cyt
-    data.a_size = np.sum(res.aco.transpose() > (0.5 * np.tile(data.a_mem, [res.p.xsteps, 1])),
-                         axis=0) * res.p.L / res.p.xsteps
-    data.p_mem = np.amax(res.pco, axis=1)
-    data.p_cyt = (res.p.pA - res.p.psi * np.mean(res.aco, axis=1))
-    data.p_mem_cyt = data.p_mem / data.p_cyt
-    data.p_size = np.sum(res.pco.transpose() > (0.5 * np.tile(data.p_mem, [res.p.xsteps, 1])),
-                         axis=0) * res.p.L / res.p.xsteps
-
-    return data, labels
+# def stats(res):
+#     tsteps = int(res.p.Tmax / res.p.deltat) + 1
+#
+#     class data:
+#         asi = np.zeros([tsteps])
+#         a_cyt = np.zeros([tsteps])
+#         a_mem = np.zeros([tsteps])
+#         a_mem_cyt = np.zeros([tsteps])
+#         a_size = np.zeros([tsteps])
+#         p_cyt = np.zeros([tsteps])
+#         p_mem = np.zeros([tsteps])
+#         p_mem_cyt = np.zeros([tsteps])
+#         p_size = np.zeros([tsteps])
+#         subjob = np.zeros([tsteps])
+#
+#     class labels:
+#         asi = 'Asymmetry index'
+#         a_cyt = 'A cytoplasmic concentration [μm⁻³]'
+#         a_mem = 'A domain concentration [μm⁻²]'
+#         a_mem_cyt = 'A membrane:cytoplasmic ratio'
+#         a_size = 'A domain size [μm]'
+#         p_cyt = 'P cytoplasmic concentration [μm⁻³]'
+#         p_mem = 'P domain concentration [μm⁻²]'
+#         p_mem_cyt = 'P membrane;cytoplasmic ratio'
+#         p_size = 'P domain size [μm]'
+#
+#     data.asi = (2 * np.sum((np.sign(res.aco - res.pco) + 1) / 2, axis=1) - res.p.xsteps) / res.p.xsteps
+#     data.a_mem = np.amax(res.aco, axis=1)
+#     data.a_cyt = (res.p.pA - res.p.psi * np.mean(res.aco, axis=1))
+#     data.a_mem_cyt = data.a_mem / data.a_cyt
+#     data.a_size = np.sum(res.aco.transpose() > (0.5 * np.tile(data.a_mem, [res.p.xsteps, 1])),
+#                          axis=0) * res.p.L / res.p.xsteps
+#     data.p_mem = np.amax(res.pco, axis=1)
+#     data.p_cyt = (res.p.pA - res.p.psi * np.mean(res.aco, axis=1))
+#     data.p_mem_cyt = data.p_mem / data.p_cyt
+#     data.p_size = np.sum(res.pco.transpose() > (0.5 * np.tile(data.p_mem, [res.p.xsteps, 1])),
+#                          axis=0) * res.p.L / res.p.xsteps
+#
+#     return data, labels
 
 
 ############################## PLOTS ##############################

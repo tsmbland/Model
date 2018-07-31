@@ -25,6 +25,6 @@ ranges = [[0.001, 1], [0.001, 1], [0.001, 1], [0.001, 1], [0.001, 1], [0.001, 1]
           [0.001, 1]]
 
 x.alg_parsim_rand_clust(m=m0007.Model(p0), params=params, ranges=ranges, nsims=960, jobid=6, subjobid=0, cores=32,
-                        compression=2, node=int(sys.argv[1]), funcs=[x.mse, x.asi_a, x.asi_p])
+                        compression=2, node=int(sys.argv[1]), funcs=[x.mse_0, x.asi_a, x.asi_p])
 
 x.save_scores_batch(6, 0)
