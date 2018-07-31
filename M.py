@@ -573,30 +573,45 @@ def mse_0(res):
 def mse_1(res):
     base0 = loaddata(9999, 0, 0)  # polarised
     base1 = loaddata(9999, 0, 1)  # uniform
-    mse_a = np.mean(((res.aco[-1, :] - base1.aco) ** 2))
-    mse_p = np.mean(((res.pco[-1, :] - base0.pco) ** 2))
+    mse_a = np.mean(((res.aco - base1.aco) ** 2))
+    mse_p = np.mean(((res.pco - base0.pco) ** 2))
     score = np.mean([mse_a, mse_p])
     res.scores['mse_1'] = score
 
 
 def asi_a(res):
-    ant = np.mean(res.aco[-1, 0:len(res.aco[-1, :]) // 2])
-    post = np.mean(res.aco[-1, len(res.aco[-1, :]) // 2:])
+    ant = np.mean(res.aco[:len(res.aco) // 2])
+    post = np.mean(res.aco[len(res.aco) // 2:])
     asi = (ant - post) / (2 * (ant + post))
     res.scores['asi_a'] = asi
 
 
 def asi_p(res):
-    ant = np.mean(res.pco[-1, 0:len(res.pco[-1, :]) // 2])
-    post = np.mean(res.pco[-1, len(res.pco[-1, :]) // 2:])
+    ant = np.mean(res.pco[:len(res.pco) // 2])
+    post = np.mean(res.pco[len(res.pco) // 2:])
     asi = (ant - post) / (2 * (ant + post))
-    res.scores[asi_p] = asi
+    res.scores['asi_p'] = asi
 
 
-def print_scores_batch(jobid, subjobid):
+def domainsize_a(res):
+    size = np.sum(res.aco > (0.1 * max(res.aco))) * res.p.L / res.p.xsteps
+    res.scores['domainsize_a'] = size
+
+
+def domainsize_p(res):
+    size = np.sum(res.pco > (0.1 * max(res.pco))) * res.p.L / res.p.xsteps
+    res.scores['domainsize_p'] = size
+
+
+all_analysis = [mse_0, mse_1, asi_a, asi_p, domainsize_a, domainsize_p]
+
+
+def batch_analysis(jobid, subjobid, funcs):
     for simid in simidlist(jobid, subjobid):
         r = loaddata(jobid, subjobid, simid)
-        print([simid, r.scores])
+        for func in funcs:
+            func(r)
+        savedata(r, jobid, subjobid, simid, compression=0)
 
 
 def save_scores_batch(jobid, subjobid):
@@ -619,50 +634,6 @@ def save_scores_batch(jobid, subjobid):
 
 def direc_to(jobid, subjobid):
     return '%s/%s/%s' % (datadirec, '{0:04}'.format(jobid), '{0:04}'.format(subjobid))
-
-
-############################## ANALYSIS ##########################
-
-
-# def stats(res):
-#     tsteps = int(res.p.Tmax / res.p.deltat) + 1
-#
-#     class data:
-#         asi = np.zeros([tsteps])
-#         a_cyt = np.zeros([tsteps])
-#         a_mem = np.zeros([tsteps])
-#         a_mem_cyt = np.zeros([tsteps])
-#         a_size = np.zeros([tsteps])
-#         p_cyt = np.zeros([tsteps])
-#         p_mem = np.zeros([tsteps])
-#         p_mem_cyt = np.zeros([tsteps])
-#         p_size = np.zeros([tsteps])
-#         subjob = np.zeros([tsteps])
-#
-#     class labels:
-#         asi = 'Asymmetry index'
-#         a_cyt = 'A cytoplasmic concentration [μm⁻³]'
-#         a_mem = 'A domain concentration [μm⁻²]'
-#         a_mem_cyt = 'A membrane:cytoplasmic ratio'
-#         a_size = 'A domain size [μm]'
-#         p_cyt = 'P cytoplasmic concentration [μm⁻³]'
-#         p_mem = 'P domain concentration [μm⁻²]'
-#         p_mem_cyt = 'P membrane;cytoplasmic ratio'
-#         p_size = 'P domain size [μm]'
-#
-#     data.asi = (2 * np.sum((np.sign(res.aco - res.pco) + 1) / 2, axis=1) - res.p.xsteps) / res.p.xsteps
-#     data.a_mem = np.amax(res.aco, axis=1)
-#     data.a_cyt = (res.p.pA - res.p.psi * np.mean(res.aco, axis=1))
-#     data.a_mem_cyt = data.a_mem / data.a_cyt
-#     data.a_size = np.sum(res.aco.transpose() > (0.5 * np.tile(data.a_mem, [res.p.xsteps, 1])),
-#                          axis=0) * res.p.L / res.p.xsteps
-#     data.p_mem = np.amax(res.pco, axis=1)
-#     data.p_cyt = (res.p.pA - res.p.psi * np.mean(res.aco, axis=1))
-#     data.p_mem_cyt = data.p_mem / data.p_cyt
-#     data.p_size = np.sum(res.pco.transpose() > (0.5 * np.tile(data.p_mem, [res.p.xsteps, 1])),
-#                          axis=0) * res.p.L / res.p.xsteps
-#
-#     return data, labels
 
 
 ############################## PLOTS ##############################
@@ -964,7 +935,7 @@ def cam_diagram(jobid, subjobid, params, ranges):
         res = loaddata(jobid, subjobid, simid)
         for param in range(len(params)):
             a = np.polyfit([np.log10(ranges[param][0]), np.log10(ranges[param][1])], [0, 1], 1)
-            values[param] = a[0] * np.log10(getattr(res.p, params[param])) + a[1]
+            values[param] = a[0] * np.log10(getattr(res.params, params[param])) + a[1]
         values[-1] = values[0]
         ax.plot(angles, values)
     plt.show()
