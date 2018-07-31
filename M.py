@@ -594,12 +594,12 @@ def asi_p(res):
 
 
 def domainsize_a(res):
-    size = np.sum(res.aco > (0.1 * max(res.aco))) * res.p.L / res.p.xsteps
+    size = np.sum(res.aco > (0.1 * max(res.aco))) * res.params.L / res.params.xsteps
     res.scores['domainsize_a'] = size
 
 
 def domainsize_p(res):
-    size = np.sum(res.pco > (0.1 * max(res.pco))) * res.p.L / res.p.xsteps
+    size = np.sum(res.pco > (0.1 * max(res.pco))) * res.params.L / res.params.xsteps
     res.scores['domainsize_p'] = size
 
 
