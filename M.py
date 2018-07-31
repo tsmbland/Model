@@ -422,7 +422,7 @@ def alg_parsim_clust_duplicate(m, changes, oldjobid, oldsubjobid, newjobid, news
     # Run simulations
     Parallel(n_jobs=cores)(
         delayed(func_parsim_dup)(m, changes, oldjobid, oldsubjobid, oldsimids[i], newjobid, newsubjobid, compression,
-                                 funcs=[]) for i in range(subjobmin, subjobmax))
+                                 funcs=funcs) for i in range(subjobmin, subjobmax))
 
 
 def alg_parsim_rand(m, params, ranges, nsims, jobid=0, subjobid=0, cores=multiprocessing.cpu_count(), seeds=None,

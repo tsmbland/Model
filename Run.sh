@@ -6,4 +6,4 @@
 
 module load Python/3.5.2-foss-2016b
 
-srun python -m Scripts.s180725a $SLURM_ARRAY_TASK_ID $SLURM_ARRAY_TASK_MAX
+srun python -m Scripts.s180725__c__m0008_random $SLURM_ARRAY_TASK_ID $SLURM_ARRAY_TASK_MAX
