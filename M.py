@@ -414,7 +414,6 @@ def alg_parsim_clust_duplicate(m, changes, oldjobid, oldsubjobid, newjobid, news
     """
 
     oldsimids = simidlist(oldjobid, oldsubjobid)
-    print(oldsimids)
 
     # Allocate subjobs to node
     subjobmin = node * cores
@@ -950,7 +949,7 @@ def genalg_plot1(jobid, base=None):
     plt.show()
 
 
-def genalg_spider(jobid, subjobid, params):
+def cam_diagram(jobid, subjobid, params, ranges):
     # Set up plot
     angles = [n / float(len(params)) * 2 * np.pi for n in range(len(params))]
     angles += angles[:1]
@@ -964,7 +963,8 @@ def genalg_spider(jobid, subjobid, params):
         values = np.zeros(len(params) + 1)
         res = loaddata(jobid, subjobid, simid)
         for param in range(len(params)):
-            values[param] = getattr(res.p, params[param])
+            a = np.polyfit([np.log10(ranges[param][0]), np.log10(ranges[param][1])], [0, 1], 1)
+            values[param] = a[0] * np.log10(getattr(res.p, params[param])) + a[1]
         values[-1] = values[0]
         ax.plot(angles, values)
     plt.show()
