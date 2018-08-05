@@ -588,26 +588,26 @@ def mse_p_1(res):
 
 
 def asi_a(res):
-    ant = np.mean(res.aco[:len(res.aco) // 2])
-    post = np.mean(res.aco[len(res.aco) // 2:])
+    ant = np.mean(res.aco[-1, :len(res.aco[-1, :]) // 2])
+    post = np.mean(res.aco[-1, len(res.aco[-1, :]) // 2:])
     asi = (ant - post) / (2 * (ant + post))
     res.scores['asi_a'] = asi
 
 
 def asi_p(res):
-    ant = np.mean(res.pco[:len(res.pco) // 2])
-    post = np.mean(res.pco[len(res.pco) // 2:])
+    ant = np.mean(res.pco[-1, :len(res.pco[-1, :]) // 2])
+    post = np.mean(res.pco[-1, len(res.pco[-1, :]) // 2:])
     asi = (ant - post) / (2 * (ant + post))
     res.scores['asi_p'] = asi
 
 
 def domainsize_a(res):
-    size = np.sum(res.aco > (0.2 * max(res.aco))) * res.params.L / res.params.xsteps
+    size = np.sum(res.aco[-1, :] > (0.2 * max(res.aco[-1, :]))) * res.params.L / res.params.xsteps
     res.scores['domainsize_a'] = size
 
 
 def domainsize_p(res):
-    size = np.sum(res.pco > (0.2 * max(res.pco))) * res.params.L / res.params.xsteps
+    size = np.sum(res.pco[-1, :] > (0.2 * max(res.pco[-1, :]))) * res.params.L / res.params.xsteps
     res.scores['domainsize_p'] = size
 
 
