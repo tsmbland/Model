@@ -562,21 +562,29 @@ def gen_alg_clust(m, func, params, ranges, jobid, cores, nodes, node, innergens=
 
 ########################## ANALYSIS FUNCTIONS ##########################
 
-def mse_0(res):
+
+def mse_a_0(res):
     base = loaddata(9999, 0, 0)
-    mse_a = np.mean(((res.aco[-1, :] - base.aco) ** 2))
-    mse_p = np.mean(((res.pco[-1, :] - base.pco) ** 2))
-    score = np.mean([mse_a, mse_p])
-    res.scores['mse_0'] = score
+    mse = np.mean(((res.aco[-1, :] - base.aco) ** 2))
+    res.scores['mse_a_0'] = mse
 
 
-def mse_1(res):
-    base0 = loaddata(9999, 0, 0)  # polarised
-    base1 = loaddata(9999, 0, 1)  # uniform
-    mse_a = np.mean(((res.aco - base1.aco) ** 2))
-    mse_p = np.mean(((res.pco - base0.pco) ** 2))
-    score = np.mean([mse_a, mse_p])
-    res.scores['mse_1'] = score
+def mse_p_0(res):
+    base = loaddata(9999, 0, 0)
+    mse = np.mean(((res.pco[-1, :] - base.pco) ** 2))
+    res.scores['mse_p_0'] = mse
+
+
+def mse_a_1(res):
+    base = loaddata(9999, 0, 1)
+    mse = np.mean(((res.aco[-1, :] - base.aco) ** 2))
+    res.scores['mse_a_1'] = mse
+
+
+def mse_p_1(res):
+    base = loaddata(9999, 0, 1)
+    mse = np.mean(((res.pco[-1, :] - base.pco) ** 2))
+    res.scores['mse_p_1'] = mse
 
 
 def asi_a(res):
@@ -594,16 +602,16 @@ def asi_p(res):
 
 
 def domainsize_a(res):
-    size = np.sum(res.aco > (0.1 * max(res.aco))) * res.params.L / res.params.xsteps
+    size = np.sum(res.aco > (0.2 * max(res.aco))) * res.params.L / res.params.xsteps
     res.scores['domainsize_a'] = size
 
 
 def domainsize_p(res):
-    size = np.sum(res.pco > (0.1 * max(res.pco))) * res.params.L / res.params.xsteps
+    size = np.sum(res.pco > (0.2 * max(res.pco))) * res.params.L / res.params.xsteps
     res.scores['domainsize_p'] = size
 
 
-all_analysis = [mse_0, mse_1, asi_a, asi_p, domainsize_a, domainsize_p]
+all_analysis = [mse_a_0, mse_p_0, mse_a_1, mse_p_1, asi_a, asi_p, domainsize_a, domainsize_p]
 
 
 def batch_analysis(jobid, subjobid, funcs):
@@ -649,6 +657,18 @@ def parplot(i, ax, aco, pco, p):
     # ax.legend()
 
 
+def parplot_norm(jobid=0, subjobid=0, simid=0):
+    res = loaddata(jobid, subjobid, simid)
+    a = np.polyfit([min(res.aco[-1, :]), max(res.aco[-1, :])], [0, 1], 1)
+    b = np.polyfit([min(res.pco[-1, :]), max(res.pco[-1, :])], [0, 1], 1)
+    plt.plot(res.aco[-1, :] * a[0] + a[1], label='A', c='r')
+    plt.plot(res.pco[-1, :] * b[0] + b[1], label='P', c='c')
+    plt.xticks([])
+    plt.yticks([])
+    sns.despine()
+    plt.show()
+
+
 def plot_singlesim(jobid=0, subjobid=0, simid=0):
     res = loaddata(jobid, subjobid, simid)
 
@@ -656,7 +676,7 @@ def plot_singlesim(jobid=0, subjobid=0, simid=0):
     fig = plt.figure()
     ax = fig.add_subplot(111)
     plt.subplots_adjust(left=0.25, bottom=0.25)
-    parplot(-1, ax, res.aco, res.pco, res.p)
+    parplot(-1, ax, res.aco, res.pco, res.params)
     plt.show()
 
 

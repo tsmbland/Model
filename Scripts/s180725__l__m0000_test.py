@@ -13,8 +13,9 @@ x.datadirec = '../../ModelaData'
 ########## Single simulaton <- good
 
 model = m0000.Model(m0000.p0)
-x.alg_singlesim(model, 2, 0, 0, compression=0, funcs=[x.mse_0, x.asi_a, x.asi_p])
-# x.sliderplot(2, 0, 0)
+# x.alg_singlesim(model, 2, 0, 0, compression=0)
+x.plot_singlesim(2, 0, 0)
+x.parplot_norm(2, 0, 0)
 
 
 # model = m.Model(m.p0)
