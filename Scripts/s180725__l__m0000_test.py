@@ -7,15 +7,18 @@ Testing m0000
 import M as x
 import Models.m0000 as m0000
 
-x.datadirec = '../../ModelaData'
+x.datadirec = '../../ModelData'
 
 
 ########## Single simulaton <- good
 
 model = m0000.Model(m0000.p0)
-# x.alg_singlesim(model, 2, 0, 0, compression=0)
-x.plot_singlesim(2, 0, 0)
-x.parplot_norm(2, 0, 0)
+x.alg_singlesim(model, 2, 0, 0, compression=0, funcs=x.all_analysis)
+# x.plot_singlesim(2, 0, 0)
+# x.parplot_norm(2, 0, 0)
+x.sliderplot(2, 0, 0)
+res = x.loaddata(2, 0, 0)
+print(res.scores)
 
 
 # model = m.Model(m.p0)

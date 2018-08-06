@@ -45,34 +45,62 @@ class Params:
 class Model:
     def __init__(self, params):
         """
-        a: Cortical aPAR
-        p: Cortical pPAR
-        s: Cortical scaffold
+        am: Membrane aPAR
+        ac: Cytoplasmic aPAR
+        pc: Cytoplasmic pPAR
+        sm: Membrane scaffold (unbound to p)
+        sc: Cytoplasmic scaffold
+        spm0: Membrane scaffold with non-membrane-bound p
+        spm1: Membrane scaffold with membrane-bound p
+        spc: Cytoplasmic scaffold-p
+
         """
 
         self.params = params
         self.res = self.Res(params)
 
-        self.a = np.zeros([self.params.xsteps])
-        self.p = np.zeros([self.params.xsteps])
-        self.s = np.zeros([self.params.xsteps])
+        self.am = self.params.am_0 * np.zeros([self.params.xsteps])
+        self.ac = self.params.ac_0
+        self.am = self.params.am_0 * np.zeros([self.params.xsteps])
+        self.pc = self.params.pc_0
+        self.sm = self.params.sm_0 * np.zeros([self.params.xsteps])
+        self.sc = self.params.sc_0
+        self.spm0 = self.params.spm0_0 * np.zeros([self.params.xsteps])
+        self.spm1 = self.params.spm1_0 * np.zeros([self.params.xsteps])
+        self.spc = self.params.spc_0
 
     def reactions(self, lb, ub):
         """
-        r0: binding of a to cortex
-        r1: unbinding of a from cortex
-        r2: antagonism from p to a
-        r3: diffusion of a
-        
-        r4: binding of p to scaffold
-        r5: unbinding of p from scaffold
-        r6: antagonism from a to p
-        r7: diffusion of p
-        
-        r8: binding of scaffold to cortex
-        r9: unbinding of scaffold from cortex
-        r10: antagonism from a to s
-        r11: diffusion of s
+
+        r0: binding of ac to cortex
+        r1: unbinding of am from cortex
+        r2: binding of sc to cortex
+        r3: unbinding of sm from cortex
+        r4: binding of pc to cortex
+        r5: unbinding of pm from cortex
+
+        r6: Dimerisation of sm with pc
+        r7: Separation of spm0
+        r8: Single binding of spc to cortex
+        r9: unbinding of spm0 from cortex
+        r10: binding of p in spm0 to cortex
+        r11: unbinding of p in spm1
+        r12: separation of spm1
+        r13: dimerisation of pm and sm
+        r14: dimerisation of pc and sc
+        r15: separation of spc
+
+        r16: antagonism from p to am
+        r17: antagonism from am to sm
+        r18: antagonism from am to pm
+        r19: Antagonism from a to smp0
+
+        r20: diffusion of a
+        r21: diffusion of s
+        r22: diffusion of p
+        r23: diffusion of smp0
+
+
         """
 
         acyt = (self.params.pA - self.params.psi * np.mean(self.a))
@@ -100,7 +128,7 @@ class Model:
 
         return diff
 
-    def update_a(self, r, lb , ub):
+    def update_a(self, r, lb, ub):
         self.a[lb:ub] += (r[0] - r[1] - r[2] + r[3]) * self.params.deltat
 
     def update_p(self, r, lb, ub):
@@ -158,5 +186,4 @@ class Model:
 
 
 p0 = Params(pA=1.56, Da=0.28, konA=1, koffA=1, kAP=1, eAP=1, pP=1, Dp=0.15, konP=1, koffP=1, kPA=1, ePA=2, pS=1,
-              Ds=0, konS=1, koffS=1, kSA=1, eSA=2, L=67.3, xsteps=500, psi=0.174, Tmax=1000, deltat=0.01)
-
+            Ds=0, konS=1, koffS=1, kSA=1, eSA=2, L=67.3, xsteps=500, psi=0.174, Tmax=1000, deltat=0.01)

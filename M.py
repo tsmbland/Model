@@ -326,6 +326,7 @@ def alg_singlesim(m, jobid=0, subjobid=0, simid=0, compression=1, funcs=[]):
 
     # Run model
     r = m.run()
+    r.params = m.params
 
     # Run additional functions
     for func in funcs:
@@ -423,6 +424,30 @@ def alg_parsim_clust_duplicate(m, changes, oldjobid, oldsubjobid, newjobid, news
     Parallel(n_jobs=cores)(
         delayed(func_parsim_dup)(m, changes, oldjobid, oldsubjobid, oldsimids[i], newjobid, newsubjobid, compression,
                                  funcs=funcs) for i in range(subjobmin, subjobmax))
+
+
+def alg_parsim_duplicate(m, changes, oldjobid, oldsubjobid, newjobid, newsubjobid, cores, compression=1, funcs=[]):
+    """
+
+    :param m:
+    :param changes:
+    :param oldjobid:
+    :param oldsubjobid:
+    :param newjobid:
+    :param newsubjobid:
+    :param cores:
+    :param node:
+    :param compression:
+    :param funcs:
+    :return:
+    """
+
+    oldsimids = simidlist(oldjobid, oldsubjobid)
+
+    # Run simulations
+    Parallel(n_jobs=cores, verbose=51)(
+        delayed(func_parsim_dup)(m, changes, oldjobid, oldsubjobid, oldsimids[i], newjobid, newsubjobid, compression,
+                                 funcs=funcs) for i in range(len(oldsimids)))
 
 
 def alg_parsim_rand(m, params, ranges, nsims, jobid=0, subjobid=0, cores=multiprocessing.cpu_count(), seeds=None,
