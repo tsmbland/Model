@@ -20,7 +20,7 @@ p0 = m0008b.Params(Da=0, kon_a=0.0085, koff_a=0.0054, ra=1, Dp=0, kon_p=0.0474, 
 
 # Free parameters
 params = ['ra', 'kon_p', 'kon_p_2', 'kd_f', 'kd_b', 'rp']
-ranges = [[0.01, 1], [0.001, 0.1], [0.01, 1], [0.01, 1], [0.01, 1], [0.01, 1]]
+ranges = [[0.1, 10], [0.0001, 0.01], [0.1, 10], [0.1, 10], [0.1, 10], [0.01, 1]]
 
 # Standard simulation + analysis
 x.alg_parsim_rand_clust(m=m0008b.Model(p0), params=params, ranges=ranges, nsims=960, jobid=7, subjobid=2, cores=32,

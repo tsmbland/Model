@@ -965,7 +965,7 @@ def genalg_plot1(jobid, base=None):
     plt.show()
 
 
-def cam_diagram(jobid, subjobid, params, ranges):
+def cam_diagram(jobid, subjobid, simids, params, ranges):
     # Set up plot
     angles = [n / float(len(params)) * 2 * np.pi for n in range(len(params))]
     angles += angles[:1]
@@ -974,8 +974,7 @@ def cam_diagram(jobid, subjobid, params, ranges):
     ax.set_rlabel_position(0)
 
     # Plot data
-    nsims = len(simidlist(jobid, subjobid))
-    for simid in range(nsims):
+    for simid in simids:
         values = np.zeros(len(params) + 1)
         res = loaddata(jobid, subjobid, simid)
         for param in range(len(params)):
