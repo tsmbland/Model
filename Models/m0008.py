@@ -194,6 +194,7 @@ class Model:
         return [self.am, self.ac, self.pm1, self.pm2s, self.pm2d, self.pc1, self.pc2]
 
     def run(self):
+        self.__init__(self.params)  # <- temporary fix
         for t in range(int(self.params.Tmax / self.params.deltat)):
             r1 = self.reactions(0, self.params.xsteps // 2)
             self.update_am(r1, 0, self.params.xsteps // 2)

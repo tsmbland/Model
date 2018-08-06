@@ -196,6 +196,7 @@ class Model:
         return [self.am, self.ac, self.pm1, self.pm2s, self.pm2d, self.pc1, self.pc2]
 
     def run(self):
+        self.__init__(self.params)  # <- temporary fix
         for t in range(int(self.params.Tmax / self.params.deltat)):
             r1 = self.reactions(0, self.params.xsteps // 2)
             self.update_am(r1, 0, self.params.xsteps // 2)
@@ -235,6 +236,9 @@ class Model:
             self.aco = np.zeros([1, self.params.xsteps])
             self.pco = np.zeros([1, self.params.xsteps])
 
+            self.acyt = np.zeros([1])
+            self.pcyt = np.zeros([1])
+
             self.atot = np.zeros([1])
             self.ptot = np.zeros([1])
 
@@ -249,6 +253,9 @@ class Model:
 
             self.aco[0, :] = c[0]
             self.pco[0, :] = c[2] + c[3] + c[4]
+
+            self.acyt[0] = c[1]
+            self.pcyt[0] = c[5] + c[5]
 
             self.atot[0] = c[1] + self.params.psi * np.mean(c[0])
             self.ptot[0] = c[5] + 2 * c[6] + self.params.psi * np.mean(c[2] + 2 * c[3] + 2 * c[4])

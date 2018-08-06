@@ -20,7 +20,9 @@ p0 = m0008b.Params(Da=0.28, kon_a=0.0085, koff_a=0.0054, ra=1, Dp=0.15, kon_p=0.
 
 # Free parameters
 params = ['ra', 'kon_p', 'kon_p_2', 'kd_f', 'kd_b', 'rp']
-ranges = [[0.001, 1], [0.001, 1], [0.001, 1], [0.001, 1], [0.001, 1], [0.0001, 1]]
+ranges = [[0.001, 1], [0.001, 1], [0.001, 1], [0.001, 1], [0.001, 1], [0.001, 1]]
+# ranges = [[0.1, 10], [0.0001, 0.01], [0.1, 10], [0.1, 10], [0.1, 10], [0.1, 10]]
+
 
 # # Standard simulation + analysis
 # x.alg_parsim_rand_clust(m=m0008b.Model(p0), params=params, ranges=ranges, nsims=960, jobid=7, subjobid=0, cores=32,
@@ -29,7 +31,7 @@ ranges = [[0.001, 1], [0.001, 1], [0.001, 1], [0.001, 1], [0.001, 1], [0.0001, 1
 # x.save_scores_batch(7, 0)
 
 # Retesting in PAR-1 RNAi mode + analysis
-x.alg_parsim_clust_duplicate(m=m0008b.Model(p0), changes={'rp': 0}, oldjobid=7, oldsubjobid=0, newjobid=7,
+x.alg_parsim_clust_duplicate(m=m0008b.Model(p0), changes={'ra': 0}, oldjobid=7, oldsubjobid=0, newjobid=7,
                              newsubjobid=1,
                              cores=32, node=int(sys.argv[1]), compression=0)
 x.batch_analysis(7, 1, funcs=x.all_analysis)
