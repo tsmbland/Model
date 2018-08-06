@@ -251,7 +251,7 @@ class Model:
             self.pc2[t + 1] = c[6]
 
             self.aco[t + 1, :] = c[0]
-            self.pco[t + 1, :] = c[2] + c[3] + c[4]
+            self.pco[t + 1, :] = c[2] + 2 * c[3] + 2 * c[4]
 
             self.atot[t + 1] = c[1] + self.params.psi * np.mean(c[0])
             self.ptot[t + 1] = c[5] + 2 * c[6] + self.params.psi * np.mean(c[2] + 2 * c[3] + 2 * c[4])

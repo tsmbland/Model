@@ -252,10 +252,10 @@ class Model:
             self.pc2[0] = c[6]
 
             self.aco[0, :] = c[0]
-            self.pco[0, :] = c[2] + c[3] + c[4]
+            self.pco[0, :] = c[2] + 2 * c[3] + 2 * c[4]
 
             self.acyt[0] = c[1]
-            self.pcyt[0] = c[5] + c[5]
+            self.pcyt[0] = c[5] + 2 * c[6]
 
             self.atot[0] = c[1] + self.params.psi * np.mean(c[0])
             self.ptot[0] = c[5] + 2 * c[6] + self.params.psi * np.mean(c[2] + 2 * c[3] + 2 * c[4])
