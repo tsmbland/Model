@@ -142,12 +142,16 @@ class Model:
         """
         self.am[lb:ub] += (r[24] + r[17] - r[18] - r[19]) * self.params.deltat
 
-    def update_ac(self, r):
+    def update_ac(self, r, lb, ub):
         """
         Cytoplasmic aPAR
+
         """
-        self.ac += (- (1 / self.params.psi) * r[17] + (1 / self.params.psi) * np.mean(r[18]) + (
-            1 / self.params.psi) * np.mean(r[19])) * self.params.deltat
+        x = (ub - lb) / self.params.xsteps
+
+        self.ac += (- (x * self.params.psi) * r[17] + (x * self.params.psi) * np.mean(r[18]) + (
+            x * self.params.psi) * np.mean(
+            r[19])) * self.params.deltat
 
     def update_pm1(self, r, lb, ub):
         """
@@ -167,49 +171,52 @@ class Model:
         """
         self.pm2d[lb:ub] += (r[27] + r[3] - r[4] + r[11] - r[12] - r[15]) * self.params.deltat
 
-    def update_pc1(self, r):
+    def update_pc1(self, r, lb, ub):
         """
         Cytoplasmic monomer
         """
-        self.pc1 += (- (1 / self.params.psi) * r[1] + (1 / self.params.psi) * np.mean(r[2]) - (
-            1 / self.params.psi) * np.mean(r[5]) + (1 / self.params.psi) * np.mean(r[6]) + (
-                         1 / self.params.psi) * np.mean(
-            r[7]) - 2 * r[21] + 2 * r[22]) * self.params.deltat
+        x = (ub - lb) / self.params.xsteps
+        self.pc1 += ((- (x * self.params.psi) * r[1]) + ((x * self.params.psi) * np.mean(r[2])) - (
+            (x * self.params.psi) * np.mean(
+                r[5])) + ((x * self.params.psi) * np.mean(r[6])) + (x * self.params.psi) * np.mean(r[7]) - 2 * r[
+                         21] + 2 *
+                     r[
+                         22]) * self.params.deltat
 
-    def update_pc2(self, r):
+    def update_pc2(self, r, lb, ub):
         """
         Cytoplasmic dimer
         """
-        self.pc2 += (- (1 / self.params.psi) * r[9] + (1 / self.params.psi) * np.mean(r[10]) + (
-            1 / self.params.psi) * np.mean(r[13]) + (1 / self.params.psi) * np.mean(r[15]) + r[21] - r[
-                         22]) * self.params.deltat
+        x = (ub - lb) / self.params.xsteps
+        self.pc2 += (- (x * self.params.psi) * r[9] + (x * self.params.psi) * np.mean(r[10]) + (
+            x * self.params.psi) * np.mean(
+            r[13]) + (x * self.params.psi) * np.mean(r[15]) + r[21] - r[22]) * self.params.deltat
 
     def get_all(self):
         return [self.am, self.ac, self.pm1, self.pm2s, self.pm2d, self.pc1, self.pc2]
 
     def run(self):
-
         for t in range(int(self.params.Tmax / self.params.deltat)):
             r1 = self.reactions(0, self.params.xsteps // 2)
             self.update_am(r1, 0, self.params.xsteps // 2)
-            self.update_ac(r1)
+            self.update_ac(r1, 0, self.params.xsteps // 2)
 
             r2 = self.reactions(self.params.xsteps // 2, self.params.xsteps)
             self.update_pm1(r2, self.params.xsteps // 2, self.params.xsteps)
             self.update_pm2s(r2, self.params.xsteps // 2, self.params.xsteps)
             self.update_pm2d(r2, self.params.xsteps // 2, self.params.xsteps)
-            self.update_pc1(r2)
-            self.update_pc2(r2)
+            self.update_pc1(r2, self.params.xsteps // 2, self.params.xsteps)
+            self.update_pc2(r2, self.params.xsteps // 2, self.params.xsteps)
 
         for t in range(int(self.params.Tmax / self.params.deltat)):
             r = self.reactions(0, self.params.xsteps)
             self.update_am(r, 0, self.params.xsteps)
-            self.update_ac(r)
+            self.update_ac(r, 0, self.params.xsteps)
             self.update_pm1(r, 0, self.params.xsteps)
             self.update_pm2s(r, 0, self.params.xsteps)
             self.update_pm2d(r, 0, self.params.xsteps)
-            self.update_pc1(r)
-            self.update_pc2(r)
+            self.update_pc1(r, 0, self.params.xsteps)
+            self.update_pc2(r, 0, self.params.xsteps)
         self.res.update(self.get_all())
         return self.res
 
@@ -228,6 +235,9 @@ class Model:
             self.aco = np.zeros([1, self.params.xsteps])
             self.pco = np.zeros([1, self.params.xsteps])
 
+            self.atot = np.zeros([1])
+            self.ptot = np.zeros([1])
+
         def update(self, c):
             self.am[0, :] = c[0]
             self.ac[0] = c[1]
@@ -239,6 +249,9 @@ class Model:
 
             self.aco[0, :] = c[0]
             self.pco[0, :] = c[2] + c[3] + c[4]
+
+            self.atot[0] = c[1] + self.params.psi * np.mean(c[0])
+            self.ptot[0] = c[5] + 2 * c[6] + self.params.psi * np.mean(c[2] + 2 * c[3] + 2 * c[4])
 
 
 p0 = Params(Da=1, kon_a=1, koff_a=1, ra=1, Dp=1, kon_p=1, koff_p=1, kon_p_2=5, kd_f=2, kd_b=1, rp=1, L=50, xsteps=500,
