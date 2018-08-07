@@ -9,8 +9,8 @@ Memory-friendly
 
 
 class Params:
-    def __init__(self, Da, kon_a, koff_a, ra, Dp, kon_p, koff_p, kon_p_2, kd_f, kd_b, rp, L, xsteps, psi, Tmax, deltat,
-                 starts):
+    def __init__(self, Da, kon_a, koff_a, ra, Dp, kon_p, koff_p, kon_p_2, kd_f, kd_b, rp, L, xsteps, psi, Tmax, eqTmax,
+                 deltat, starts):
         ########### aPARS ###########
 
         # Diffusion
@@ -46,6 +46,7 @@ class Params:
         self.xsteps = xsteps
         self.psi = psi  # um-1
         self.Tmax = Tmax  # s
+        self.eqTmax = eqTmax  # s
         self.deltat = deltat  # s
 
         ########## Starts ##########
@@ -197,7 +198,7 @@ class Model:
 
     def run(self):
         self.__init__(self.params)  # <- temporary fix
-        for t in range(int(self.params.Tmax / self.params.deltat)):
+        for t in range(int(self.params.eqTmax / self.params.deltat)):
             r1 = self.reactions(0, self.params.xsteps // 2)
             self.update_am(r1, 0, self.params.xsteps // 2)
             self.update_ac(r1, 0, self.params.xsteps // 2)
