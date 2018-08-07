@@ -262,5 +262,5 @@ class Model:
             self.ptot[0] = c[5] + 2 * c[6] + self.params.psi * np.mean(c[2] + 2 * c[3] + 2 * c[4])
 
 
-p0 = Params(Da=1, kon_a=1, koff_a=1, ra=1, Dp=1, kon_p=1, koff_p=1, kon_p_2=5, kd_f=2, kd_b=1, rp=1, L=50, xsteps=500,
-            psi=0.3, Tmax=100, deltat=0.01, starts=[0, 1, 0, 0, 0, 1, 0])
+# p0 = Params(Da=1, kon_a=1, koff_a=1, ra=1, Dp=1, kon_p=1, koff_p=1, kon_p_2=5, kd_f=2, kd_b=1, rp=1, L=50, xsteps=500,
+#             psi=0.3, Tmax=100, deltat=0.01, starts=[0, 1, 0, 0, 0, 1, 0])
