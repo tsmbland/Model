@@ -30,7 +30,7 @@ ranges = [[0.1, 10], [0.0001, 0.01], [0.1, 10], [0.1, 10], [0.1, 10], [0.1, 10]]
 # x.save_scores_batch(9, 0)
 
 # Retesting in PAR-1 RNAi mode + analysis
-x.alg_parsim_clust_duplicate(m=m0008b.Model(p0), changes={'rp': 0}, oldjobid=9, oldsubjobid=0, newjobid=9,
+x.alg_parsim_clust_duplicate(m=m0008b.Model(p0), changes={'ra': 0}, oldjobid=9, oldsubjobid=0, newjobid=9,
                              newsubjobid=1,
                              cores=32, node=int(sys.argv[1]), compression=0)
 x.batch_analysis(9, 1, funcs=x.all_analysis)
