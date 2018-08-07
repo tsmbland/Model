@@ -110,9 +110,9 @@ class Model:
 
         # Run model
         for t in range(int(self.params.Tmax / self.params.deltat)):
-            self.update_aco(p)
-            self.update_pco(p)
-            res.update(t, self.get_all())
+            self.update_aco(self.params)
+            self.update_pco(self.params)
+            self.res.update(t, self.get_all())
 
         return self.res
 
@@ -135,12 +135,19 @@ class Model:
 ###################################################################################
 
 
-p1 = Params(Da=0.28, Dp=0.15, konA1=0.0085, koffA=0.0054, konP1=0.0474, koffP=0.0073, kAP=0, kPA=0.15,
-            kAneg=0.3, kPneg=0.3, ePneg=1, eAneg=10, konA2=0, konP2=1, kApos=0, kPpos=2, eApos=0,
-            ePpos=10, pA=1.56, pP=1, L=67.3, xsteps=500, psi=0.174, Tmax=1000, deltat=0.1, Aeqmin=0, Aeqmax=0.5,
+p1 = Params(Da=0.28, Dp=0., konA1=0.0085, koffA=0.0054, konP1=0.0474, koffP=0.0073, kAP=0, kPA=0.15,
+            kAneg=0.1, kPneg=0.3, ePneg=1, eAneg=10, konA2=0, konP2=1, kApos=0, kPpos=2, eApos=0,
+            ePpos=2, pA=1.56, pP=1, L=67.3, xsteps=500, psi=0.174, Tmax=1000, deltat=0.1, Aeqmin=0, Aeqmax=0.5,
             Peqmin=0.5, Peqmax=1)
 
 p2 = Params(Da=0.28, Dp=0.15, konA1=0.0085, koffA=0.0054, konP1=0.02539162, koffP=0.0073, kAP=0,
             kPA=0.15, kAneg=0.3, kPneg=0.3, ePneg=1, eAneg=10, konA2=0, konP2=0.00257667, kApos=0,
             kPpos=1, eApos=0, ePpos=10, pA=1.56, pP=1, L=67.3, xsteps=500, psi=0.174, Tmax=1000, deltat=0.1, Aeqmin=0,
             Aeqmax=0.5, Peqmin=0.5, Peqmax=1)
+
+m = Model(p1)
+
+import M as x
+
+x.alg_singlesim(m, compression=0)
+x.sliderplot()
