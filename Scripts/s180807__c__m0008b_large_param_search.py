@@ -6,7 +6,7 @@ import M as x
 import Models.m0008b as m0008b
 import sys
 
-x.datadirec = '../../ModelData'
+x.datadirec = '../working/Tom/ModelData'
 
 # Base parameter set
 p0 = m0008b.Params(Da=0, kon_a=0.0085, koff_a=0.0054, ra=1, Dp=0, kon_p=0.0474, koff_p=0.0073, kon_p_2=0.0474,
