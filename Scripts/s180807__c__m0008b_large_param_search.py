@@ -24,9 +24,18 @@ ranges = [[0.001, 0.1], [0.0001, 0.01], [0.1, 10], [0.01, 1], [0.01, 1], [0.0001
 # x.batch_analysis(11, 0, funcs=x.all_analysis)
 # x.save_scores_batch(11, 0)
 
-# Retesting in PAR-1 RNAi mode + analysis
-x.alg_parsim_clust_duplicate(m=m0008b.Model(p0), changes={'ra': 0}, oldjobid=11, oldsubjobid=0, newjobid=11,
-                             newsubjobid=1,
+# # Retesting in PAR-1 RNAi mode + analysis
+# x.alg_parsim_clust_duplicate(m=m0008b.Model(p0), changes={'ra': 0}, oldjobid=11, oldsubjobid=0, newjobid=11,
+#                              newsubjobid=1,
+#                              cores=32, node=int(sys.argv[1]), compression=0)
+# x.batch_analysis(11, 1, funcs=x.all_analysis)
+# x.save_scores_batch(11, 1)
+
+# Retesting in PKC RNAi mode + analysis
+x.alg_parsim_clust_duplicate(m=m0008b.Model(p0), changes={'ac_0': 0}, oldjobid=11, oldsubjobid=0, newjobid=11,
+                             newsubjobid=2,
                              cores=32, node=int(sys.argv[1]), compression=0)
-x.batch_analysis(11, 1, funcs=x.all_analysis)
-x.save_scores_batch(11, 1)
+x.batch_analysis(11, 2, funcs=x.all_analysis)
+x.save_scores_batch(11, 2)
+
+
