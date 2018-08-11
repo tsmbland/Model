@@ -61,7 +61,7 @@ class Model:
 
         self.am = self.params.am_0 * np.zeros([self.params.xsteps])
         self.ac = self.params.ac_0
-        self.am = self.params.am_0 * np.zeros([self.params.xsteps])
+        self.pm = self.params.pm_0 * np.zeros([self.params.xsteps])
         self.pc = self.params.pc_0
         self.sm = self.params.sm_0 * np.zeros([self.params.xsteps])
         self.sc = self.params.sc_0
@@ -93,33 +93,50 @@ class Model:
         r16: antagonism from p to am
         r17: antagonism from am to sm
         r18: antagonism from am to pm
-        r19: Antagonism from a to smp0
+        r19: Antagonism from am to spm0
+        r20: Antagonism from am to spm1
 
-        r20: diffusion of a
-        r21: diffusion of s
-        r22: diffusion of p
-        r23: diffusion of smp0
+        r21: diffusion of am
+        r22: diffusion of sm
+        r23: diffusion of pm
+        r24: diffusion of spm0
+        r24: diffusion of spm1
 
 
         """
 
-        acyt = (self.params.pA - self.params.psi * np.mean(self.a))
-        pcyt = (self.params.pP - self.params.psi * np.mean(self.p))
-        scyt = (self.params.pS - self.params.psi * np.mean(self.s))
-
         r = [None] * 12
-        r[0] = self.params.konA * acyt
-        r[1] = self.params.koffA * self.a[lb:ub]
-        r[2] = self.params.kAP * self.a[lb:ub] * (self.p[lb:ub] ** self.params.eAP)
-        r[3] = self.params.Da * self.diffusion(self.a[lb:ub])
-        r[4] = self.params.konP * pcyt
-        r[5] = self.params.koffP * self.p[lb:ub]
-        r[6] = self.params.kPA * self.p[lb:ub] * (self.a[lb:ub] ** self.params.ePA)
-        r[7] = self.params.Dp * self.diffusion(self.p[lb:ub])
-        r[8] = self.params.konS * scyt
-        r[9] = self.params.koffS * self.s[lb:ub]
-        r[10] = self.params.kSA * self.s[lb:ub] * (self.a[lb:ub] ** self.params.eSA)
-        r[11] = self.params.Ds * self.diffusion(self.s[lb:ub])
+        r[0] = self.params. * self.ac
+        r[1] = self.params. * self.am[lb:ub]
+
+        r[2] = self.params. * self.sc
+        r[3] = self.params. * self.sm[lb:ub]
+
+        r[4] = self.params. * self.pc
+        r[5] = self.params. * self.pm[lb:ub]
+
+        r[6] = self.params. * self.sm * self.pc
+        r[7] = self.params. * self.spm0
+        r[8] = self.params. * self.spc
+        r[9] = self.params. * self.spm0
+        r[10] = self.params. * self.spm0
+        r[11] = self.params. * self.spm1
+        r[12] = self.params. * self.spm1
+        r[13] = self.params. * self.pm * self.sm
+        r[14] = self.params. * self.pc * self.sc
+        r[15] = self.params. * self.spc
+        r[16] = self.params. * (...) * self.am
+        r[17] = self.params. * self.am * self.sm
+        r[18] = self.params. * self.am * self.pm
+        r[19] = self.params. * self.am * self.spm0
+        r[20] = self.params. * self.am * self.spm1
+
+        r[21] = self.params. * self.diffusion(self.am)
+        r[22] = self.params. * self.diffusion(self.sm)
+        r[23] = self.params. * self.diffusion(self.pm)
+        r[24] = self.params. * self.diffusion(self.spm0)
+        r[25] = self.params. * self.diffusion(self.spm1)
+
         return r
 
     def diffusion(self, concs):
@@ -128,33 +145,63 @@ class Model:
 
         return diff
 
-    def update_a(self, r, lb, ub):
-        self.a[lb:ub] += (r[0] - r[1] - r[2] + r[3]) * self.params.deltat
+    def update_am(self, r, lb, ub):
+        self.am[lb:ub] += (...) * self.params.deltat
 
-    def update_p(self, r, lb, ub):
-        self.p[lb:ub] += (r[4] - r[5] - r[6] + r[7]) * self.params.deltat
+    def update_ac(self, r, lb, ub):
+        self.ac += (...) * self.params.deltat
 
-    def update_s(self, r, lb, ub):
-        self.s[lb:ub] += (r[8] - r[9] - r[10] + r[11]) * self.params.deltat
+    def update_pm(self, r, lb, ub):
+        self.pm[lb:ub] += (...) * self.params.deltat
+
+    def update_pc(self, r, lb, ub):
+        self.pc += (...) * self.params.deltat
+
+    def update_sm(self, r, lb, ub):
+        self.sm[lb:ub] += (...) * self.params.deltat
+
+    def update_sc(self, r, lb, ub):
+        self.sc += (...) * self.params.deltat
+
+    def update_spm0(self, r, lb, ub):
+        self.spm0[lb:ub] += (...) * self.params.deltat
+
+    def update_spm1(self, r, lb, ub):
+        self.spm1[lb:ub] += (...) * self.params.deltat
+
+    def update_spc(self, r, lb, ub):
+        self.spc += (...) * self.params.deltat
 
     def get_all(self):
-        return [self.a, self.p, self.s]
+        return [self.am, self.ac, self.pm, self.pc, self.sm, self.sc, self.spm0, self.spm1, self.spc]
 
     def run(self):
         for t in range(int(self.params.Tmax / self.params.deltat)):
             r1 = self.reactions(0, self.params.xsteps // 2)
-            self.update_a(r1, 0, self.params.xsteps // 2)
+            self.update_am(r1, 0, self.params.xsteps // 2)
+            self.update_ac(r1, 0, self.params.xsteps // 2)
 
             r2 = self.reactions(self.params.xsteps // 2, self.params.xsteps)
-            self.update_p(r2, self.params.xsteps // 2, self.params.xsteps)
-            self.update_s(r2, self.params.xsteps // 2, self.params.xsteps)
+            self.update_pm(r2, self.params.xsteps // 2, self.params.xsteps)
+            self.update_pc(r2, self.params.xsteps // 2, self.params.xsteps)
+            self.update_sm(r2, self.params.xsteps // 2, self.params.xsteps)
+            self.update_sc(r2, self.params.xsteps // 2, self.params.xsteps)
+            self.update_spm0(r2, self.params.xsteps // 2, self.params.xsteps)
+            self.update_spm1(r2, self.params.xsteps // 2, self.params.xsteps)
+            self.update_spc(r2, self.params.xsteps // 2, self.params.xsteps)
         self.res.update(-1, self.get_all())
 
         for t in range(int(self.params.Tmax / self.params.deltat)):
             r = self.reactions(0, self.params.xsteps)
-            self.update_a(r, 0, self.params.xsteps)
-            self.update_p(r, 0, self.params.xsteps)
-            self.update_s(r, 0, self.params.xsteps)
+            self.update_am(r1, 0, self.params.xsteps)
+            self.update_ac(r1, 0, self.params.xsteps)
+            self.update_pm(r2, 0, self.params.xsteps)
+            self.update_pc(r2, 0, self.params.xsteps)
+            self.update_sm(r2, 0, self.params.xsteps)
+            self.update_sc(r2, 0, self.params.xsteps)
+            self.update_spm0(r2, 0, self.params.xsteps)
+            self.update_spm1(r2, 0, self.params.xsteps)
+            self.update_spc(r2, 0, self.params.xsteps)
             self.res.update(t, self.get_all())
 
         return self.res

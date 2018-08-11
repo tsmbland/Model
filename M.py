@@ -682,16 +682,19 @@ def parplot(i, ax, aco, pco, p):
     # ax.legend()
 
 
-def parplot_norm(jobid=0, subjobid=0, simid=0):
+def parplot_norm(ax, jobid=0, subjobid=0, simid=0, a=None, b=None):
     res = loaddata(jobid, subjobid, simid)
-    a = np.polyfit([min(res.aco[-1, :]), max(res.aco[-1, :])], [0, 1], 1)
-    b = np.polyfit([min(res.pco[-1, :]), max(res.pco[-1, :])], [0, 1], 1)
-    plt.plot(res.aco[-1, :] * a[0] + a[1], label='A', c='r')
-    plt.plot(res.pco[-1, :] * b[0] + b[1], label='P', c='c')
-    plt.xticks([])
-    plt.yticks([])
+
+    if a is None:
+        a = np.polyfit([0, max(res.aco[-1, :])], [0, 1], 1)
+    if b is None:
+        b = np.polyfit([0, max(res.pco[-1, :])], [0, 1], 1)
+    ax.plot(res.aco[-1, :] * a[0] + a[1], label='A', c='r')
+    ax.plot(res.pco[-1, :] * b[0] + b[1], label='P', c='c')
+    ax.set_xticks([])
+    ax.set_yticks([0, 1])
     sns.despine()
-    plt.show()
+    return a, b
 
 
 def plot_singlesim(jobid=0, subjobid=0, simid=0):
@@ -981,7 +984,7 @@ def cam_diagram(jobid, subjobid, simids, params, ranges):
             a = np.polyfit([np.log10(ranges[param][0]), np.log10(ranges[param][1])], [0, 1], 1)
             values[param] = a[0] * np.log10(getattr(res.params, params[param])) + a[1]
         values[-1] = values[0]
-        ax.plot(angles, values)
+        ax.plot(angles, values, c='k', alpha=0.1)
     plt.show()
 
 

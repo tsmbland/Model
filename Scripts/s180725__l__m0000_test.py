@@ -12,13 +12,17 @@ x.datadirec = '../../ModelData'
 
 ########## Single simulaton <- good
 
+p0 = m0000.Params(Da=0.28, Dp=0.15, konA=0.0085, koffA=0.0054, konP=0.0474, koffP=0.0073, kAP=0.19, kPA=2, ePneg=1, eAneg=2,
+            pA=1.56, pP=1, L=67.3, xsteps=500, psi=0.174, Tmax=5000, deltat=0.1, Aeqmin=0, Aeqmax=0.5, Peqmin=0.5,
+            Peqmax=1)
+
 model = m0000.Model(m0000.p0)
-x.alg_singlesim(model, 2, 0, 0, compression=0, funcs=x.all_analysis)
+x.alg_singlesim(model, 2, 0, 0, funcs=x.all_analysis)
 # x.plot_singlesim(2, 0, 0)
-# x.parplot_norm(2, 0, 0)
-x.sliderplot(2, 0, 0)
-res = x.loaddata(2, 0, 0)
-print(res.scores)
+x.parplot_norm(2, 0, 0)
+# x.sliderplot(2, 0, 0)
+# res = x.loaddata(2, 0, 0)
+# print(res.scores)
 
 
 # model = m.Model(m.p0)

@@ -11,9 +11,27 @@ x.datadirec = '../../ModelData'
 
 ######### Single simulation <- good
 
-model = m0008.Model(m0008.p0)
-x.alg_singlesim(model, 5, 0, 0, compression=0, funcs=[x.mse_0, x.asi_a, x.asi_p])
+p = m0008.Params(Da=1, kon_a=1, koff_a=1, ra=1, Dp=1, kon_p=1, koff_p=1, kon_p_2=5, kd_f=2, kd_b=1, rp=1, L=50, xsteps=500,
+            psi=0.3, Tmax=100, deltat=0.01, starts=[0, 1, 0, 0, 0, 1, 0])
+
+p.Tmax = 100
+
+# p.kon_a = 0
+# p.koff_a = 0
+#
+# p.kon_p = 0
+# p.kon_p_2 = 0
+# p.koff_p = 0
+# p.kd_b = 0
+# p.kd_f = 0
+
+model = m0008.Model(p)
+x.alg_singlesim(model, 5, 0, 0, compression=0)
 x.sliderplot(5, 0, 0)
+res = x.loaddata(5, 0, 0)
+x.plt.plot(res.atot)
+x.plt.plot(res.ptot)
+x.plt.show()
 
 
 
