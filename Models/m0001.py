@@ -1,14 +1,24 @@
 import numpy as np
+import matplotlib.pyplot as plt
 
 """
-Model with Hill functions for antagonism
+Simple positive feedback model
+
+Very similar to m0000
 
 """
 
 
-class Params:
-    def __init__(self, Da, Dp, konA, koffA, konP, koffP, kAP, kPA, kAneg, kPneg, ePneg, eAneg, pA, pP, L, xsteps, psi,
-                 Tmax, deltat, Aeqmin, Aeqmax, Peqmin, Peqmax):
+class Model:
+    def __init__(self, Da, Dp, konA, koffA, konP, koffP, kposP, kAP, kPA, ePneg, eAneg, xsteps, psi, Tmax,
+                 deltat, deltal, radii, am_0, ac_0, pm_0, pc_0):
+        # Species
+        self.am = am_0
+        self.ac = ac_0
+        self.pm = pm_0
+        self.pc = pc_0
+        self.time = 0
+
         # Diffusion
         self.Da = Da  # um2 s-1
         self.Dp = Dp  # um2 s-1
@@ -16,105 +26,91 @@ class Params:
         # Membrane exchange
         self.konA = konA  # um s-1
         self.koffA = koffA  # s-1
+
         self.konP = konP  # um s-1
         self.koffP = koffP  # s-1
+        self.kposP = kposP  # um3 s-1
 
         # Antagonism
-        self.kAP = kAP  # s-1
-        self.kPA = kPA  # s-1
-        self.kAneg = kAneg  # um-2
-        self.kPneg = kPneg  # um-2
-        self.ePneg = ePneg  #
-        self.eAneg = eAneg  #
-
-        # Pools
-        self.pA = pA  # um-3
-        self.pP = pP  # um-3
+        self.kAP = kAP  # um2 s-1
+        self.kPA = kPA  # um4 s-1
+        self.ePneg = ePneg
+        self.eAneg = eAneg
 
         # Misc
-        self.L = L  # um
-        self.xsteps = xsteps
+        self.xsteps = int(xsteps)
         self.psi = psi  # um-1
         self.Tmax = Tmax  # s
         self.deltat = deltat  # s
+        self.deltal = deltal  # um
+        self.radii = radii  # um
 
-        # Equilibration
-        self.Aeqmin = Aeqmin
-        self.Aeqmax = Aeqmax
-        self.Peqmin = Peqmin
-        self.Peqmax = Peqmax
+    def diffusion(self, concs):
+        return (concs[np.append(np.array(range(1, len(concs))), [len(concs) - 2])] - 2 * concs + concs[
+            np.append([1], np.array(range(len(concs) - 1)))]) / (self.deltal ** 2)
 
+    def reactions(self):
+        """
+        r0: a on
+        r1: a off
+        r2: p to a antagnism
+        r3: a diffusion
 
-class Model:
-    def __init__(self, p):
-        self.aco = np.zeros([p.xsteps])
-        self.pco = np.zeros([p.xsteps])
-        self.params = p
-        self.res = self.Res(p)
+        r4: p on
+        r5: p off
+        r6: a to p antagonism
+        r7: p diffusion
 
-    def diffusion(self, concs, coeff):
-        diff = coeff * (concs[np.append(np.array(range(1, len(concs))), [len(concs) - 2])] - 2 * concs + concs[
-            np.append([1], np.array(range(len(concs) - 1)))]) / (self.params.L / self.params.xsteps)
+        r8: pos feedback
 
-        return diff
+        """
 
-    def update_aco(self, p):
-        diff = self.diffusion(self.aco, p.Da)
-        off = (p.koffA * self.aco)
-        on = (p.konA * (p.pA - p.psi * np.mean(self.aco)))
-        ant = p.kAP * self.aco * (self.pco ** p.ePneg) / (
-            (p.kPneg ** p.ePneg) + (self.pco ** p.ePneg))
-        self.aco += ((diff + on - off - ant) * p.deltat)
+        r = [None] * 9
 
-    def update_pco(self, p):
-        diff = self.diffusion(self.pco, p.Dp)
-        off = (p.koffP * self.pco)
-        on = (p.konP * (p.pP - p.psi * np.mean(self.pco)))
-        ant = p.kPA * self.pco * (self.aco ** p.eAneg) / (
-            (p.kAneg ** p.eAneg) + (self.aco ** p.eAneg))
-        self.pco += (diff + on - off - ant) * p.deltat
+        r[0] = self.konA * self.ac
+        r[1] = self.koffA * self.am
+        r[2] = self.kAP * (self.pm ** self.ePneg) * self.am
+        r[3] = self.Da * self.diffusion(self.am)
 
-    def equilibrate_aco(self, p):
-        for t in range(5000):
-            self.update_aco(p)
-            self.aco[:int(p.xsteps * p.Aeqmin)] = 0
-            self.aco[int(p.xsteps * p.Aeqmax):] = 0
+        r[4] = (self.konP * self.pc)
+        r[5] = self.koffP * self.pm
+        r[6] = self.kPA * (self.am ** self.eAneg) * self.pm
+        r[7] = self.Dp * self.diffusion(self.pm)
 
-    def equilibrate_pco(self, p):
-        for t in range(5000):
-            self.update_pco(p)
-            self.pco[:int(p.xsteps * p.Peqmin)] = 0
-            self.pco[int(p.xsteps * p.Peqmax):] = 0
+        r[8] = self.kposP * self.pc * self.pm
 
-    def get_all(self):
-        return [self.aco, self.pco]
+        return r
+
+    def update_am(self, r):
+        self.am += (r[0] - r[1] - r[2] + r[3]) * self.deltat
+
+    def update_pm(self, r):
+        self.pm += (r[4] - r[5] - r[6] + r[7] + r[8]) * self.deltat
+
+    def update_ac(self, r):
+        self.ac += (- self.psi * r[0] + self.psi * np.average(r[1], weights=self.radii) + self.psi * np.average(r[2],
+                                                                                                                weights=self.radii)) * self.deltat
+
+    def update_pc(self, r):
+        self.pc += (- self.psi * r[4] + self.psi * np.average(r[5], weights=self.radii) + self.psi * np.average(r[6],
+                                                                                                                weights=self.radii) - self.psi * np.average(
+            r[8], weights=self.radii)) * self.deltat
+
+    def react(self):
+        r = self.reactions()
+        self.update_am(r)
+        self.update_ac(r)
+        self.update_pm(r)
+        self.update_pc(r)
 
     def run(self):
+        for t in range(int(self.Tmax / self.deltat)):
+            self.react()
+            self.time = (t + 1) * self.deltat
 
-        # Equilibrate
-        self.equilibrate_aco(self.params.p)
-        self.equilibrate_pco(self.params.p)
-        self.res.update(-1, self.get_all())
-
-        # Run model
-        for t in range(int(self.params.p.Tmax / self.params.p.deltat)):
-            self.update_aco(self.params.p)
-            self.update_pco(self.params.p)
-            self.res.update(t, self.get_all())
-
-        return self.res
-
-    class Res:
-        def __init__(self, p):
-            self.params = p
-            self.scores = {}
-            self.aco = np.zeros([int(self.params.Tmax / self.params.deltat) + 1, self.params.xsteps])
-            self.pco = np.zeros([int(self.params.Tmax / self.params.deltat) + 1, self.params.xsteps])
-
-        def update(self, t, c):
-            self.aco[t + 1] = c[0]
-            self.pco[t + 1, :] = c[1]
-
-        def compress(self):
-            self.aco = np.asarray([self.aco[-1, :], ])
-            self.pco = np.asarray([self.pco[-1, :], ])
+    def save(self, direc):
+        np.savetxt(direc + 'ac.txt', [self.ac])
+        np.savetxt(direc + 'am.txt', self.am)
+        np.savetxt(direc + 'pc.txt', [self.pc])
+        np.savetxt(direc + 'pm.txt', self.pm)
+        np.savetxt(direc + 'time.txt', [self.time])

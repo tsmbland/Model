@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 
 """
 pPAR dimerisation model
@@ -6,13 +7,23 @@ pPAR dimerisation model
 """
 
 
-class Params:
-    def __init__(self, Da, kon_a, koff_a, ra, Dp, kon_p, koff_p, kon_p_2, kd_f, kd_b, rp, L, xsteps, psi, Tmax, deltat,
-                 starts):
+class Model:
+    def __init__(self, Da, kon_a, koff_a, ra, Dp, kon_p, koff_p, kon_p_2, kd_f, kd_b, rp, xsteps, psi, Tmax,
+                 deltat, deltal, radii, am_0, ac_0, pm1_0, pm2s_0, pm2d_0, pc1_0, pc2_0, spatial=True):
+        ######### Species ###########
+        self.am = am_0
+        self.ac = ac_0
+        self.pm1 = pm1_0
+        self.pm2s = pm2s_0
+        self.pm2d = pm2d_0
+        self.pc1 = pc1_0
+        self.pc2 = pc2_0
+        self.time = 0
+
         ########### aPARS ###########
 
         # Diffusion
-        self.Da = Da  # um2 s-1
+        self.Da = Da / deltal
 
         # Membrane exchange
         self.kon_a = kon_a
@@ -24,7 +35,7 @@ class Params:
         ########### pPARS ###########
 
         # Diffusion
-        self.Dp = Dp  # um2 s-1
+        self.Dp = Dp / deltal
 
         # Membrane exchange
         self.kon_p = kon_p
@@ -40,46 +51,20 @@ class Params:
 
         ########### Misc ###########
 
-        self.L = L  # um
-        self.xsteps = xsteps
+        self.spatial = spatial
+        self.xsteps = int(xsteps)
         self.psi = psi  # um-1
         self.Tmax = Tmax  # s
         self.deltat = deltat  # s
+        self.deltal = deltal  # um
+        self.radii = radii  # um
+        self.L = 500
 
-        ########## Starts ##########
+    def diffusion(self, concs):
+        return concs[np.append(np.array(range(1, len(concs))), [len(concs) - 2])] - 2 * concs + concs[
+            np.append([1], np.array(range(len(concs) - 1)))]
 
-        self.am_0 = starts[0]
-        self.ac_0 = starts[1]
-        self.pm1_0 = starts[2]
-        self.pm2s_0 = starts[3]
-        self.pm2d_0 = starts[4]
-        self.pc1_0 = starts[5]
-        self.pc2_0 = starts[6]
-
-
-class Model:
-    def __init__(self, params):
-        """
-        am:
-        ac:
-        pm1:
-        pm2s:
-        pm2d:
-        pc1:
-        pc2:
-        """
-
-        self.params = params
-        self.res = self.Res(params)
-        self.am = self.params.am_0 * np.ones([self.params.xsteps])
-        self.ac = self.params.ac_0
-        self.pm1 = self.params.pm1_0 * np.ones([self.params.xsteps])
-        self.pm2s = self.params.pm2s_0 * np.ones([self.params.xsteps])
-        self.pm2d = self.params.pm2d_0 * np.ones([self.params.xsteps])
-        self.pc1 = self.params.pc1_0
-        self.pc2 = self.params.pc2_0
-
-    def reactions(self, lb, ub):
+    def reactions(self, ):
         """
         r1: binding of monomers to cortex
         r2: unbinding of monomers from cortex
@@ -104,170 +89,111 @@ class Model:
         """
 
         r = [None] * 28
-        r[1] = self.params.kon_p * self.pc1
-        r[2] = self.params.koff_p * self.pm1[lb:ub]
-        r[3] = self.params.kd_f * self.pm1[lb:ub] ** 2
-        r[4] = self.params.kd_b * self.pm2d[lb:ub]
-        r[5] = self.params.kd_f * self.pc1 * self.pm1[lb:ub]
-        r[6] = self.params.kd_b * self.pm2s[lb:ub]
-        r[7] = self.params.rp * self.am[lb:ub] * self.pm1[lb:ub]
-        r[9] = self.params.kon_p * self.pc2
-        r[10] = self.params.koff_p * self.pm2s[lb:ub]
-        r[11] = self.params.kon_p_2 * self.pm2s[lb:ub]
-        r[12] = self.params.koff_p * self.pm2d[lb:ub]
-        r[13] = self.params.rp * self.am[lb:ub] * self.pm2s[lb:ub]
-        r[15] = self.params.rp * self.am[lb:ub] * self.pm2d[lb:ub]
-        r[21] = self.params.kd_f * self.pc1 ** 2
-        r[22] = self.params.kd_b * self.pc2
-        r[17] = self.params.kon_a * self.ac
-        r[18] = self.params.koff_a * self.am[lb:ub]
-        r[19] = self.params.ra * (self.pm1 + self.pm2s + self.pm2d)[lb:ub] * self.am[lb:ub]
-        r[24] = self.diffusion(self.am[lb:ub], self.params.Da)
-        r[25] = self.diffusion(self.pm1[lb:ub], self.params.Dp)
-        r[26] = self.diffusion(self.pm2s[lb:ub], self.params.Dp)
-        r[27] = self.diffusion(self.pm2d[lb:ub], self.params.Dp)
+        r[1] = self.kon_p * self.pc1
+        r[2] = self.koff_p * self.pm1
+        r[3] = self.kd_f * self.pm1 ** 2
+        r[4] = self.kd_b * self.pm2d
+        r[5] = self.kd_f * self.pc1 * self.pm1
+        r[6] = self.kd_b * self.pm2s
+        r[7] = self.rp * self.am * self.pm1
+        r[9] = self.kon_p * self.pc2
+        r[10] = self.koff_p * self.pm2s
+        r[11] = self.kon_p_2 * self.pm2s
+        r[12] = self.koff_p * self.pm2d
+        r[13] = self.rp * self.am * self.pm2s
+        r[15] = self.rp * self.am * self.pm2d
+        r[21] = self.kd_f * self.pc1 ** 2
+        r[22] = self.kd_b * self.pc2
+        r[17] = self.kon_a * self.ac
+        r[18] = self.koff_a * self.am
+        r[19] = self.ra * (self.pm1 + self.pm2s + self.pm2d) * self.am
+
+        if self.spatial:
+            r[24] = self.Da * self.diffusion(self.am)
+            r[25] = self.Dp * self.diffusion(self.pm1)
+            r[26] = self.Dp * self.diffusion(self.pm2s)
+            r[27] = self.Dp * self.diffusion(self.pm2d)
+        else:
+            r[24] = 0
+            r[25] = 0
+            r[26] = 0
+            r[27] = 0
         return r
 
-    def diffusion(self, concs, coeff):
-        diff = coeff * (concs[np.append(np.array(range(1, len(concs))), [len(concs) - 2])] - 2 * concs + concs[
-            np.append([1], np.array(range(len(concs) - 1)))]) / (self.params.L / self.params.xsteps)
+    def update_am(self, r):
+        self.am += (r[24] + r[17] - r[18] - r[19]) * self.deltat
 
-        return diff
+    def update_ac(self, r):
+        self.ac += (- (self.psi * r[17]) + (self.psi * np.mean(r[18])) + (self.psi * np.mean(r[19]))) * self.deltat
 
-    def update_am(self, r, lb, ub):
-        """
-        Cortical aPAR
-        """
-        self.am[lb:ub] += (r[24] + r[17] - r[18] - r[19]) * self.params.deltat
+    def update_pm1(self, r):
+        self.pm1 += (r[25] + r[1] - r[2] - 2 * r[3] + 2 * r[4] - r[5] + r[6] - r[7]) * self.deltat
 
-    def update_ac(self, r, lb, ub):
-        """
-        Cytoplasmic aPAR
+    def update_pm2s(self, r):
+        self.pm2s += (r[26] + r[5] - r[6] + r[9] - r[10] - r[11] + r[12] - r[13]) * self.deltat
 
-        """
-        x = (ub - lb) / self.params.xsteps
+    def update_pm2d(self, r):
+        self.pm2d += (r[27] + r[3] - r[4] + r[11] - r[12] - r[15]) * self.deltat
 
-        self.ac += (- (x * self.params.psi) * r[17] + (x * self.params.psi) * np.mean(r[18]) + (
-            x * self.params.psi) * np.mean(
-            r[19])) * self.params.deltat
+    def update_pc1(self, r):
+        self.pc1 += ((- self.psi * r[1]) + (self.psi * np.mean(r[2])) - (self.psi * np.mean(r[5])) + (
+            self.psi * np.mean(r[6])) + (self.psi * np.mean(r[7])) - (2 * r[21]) + (2 * r[22])) * self.deltat
 
-    def update_pm1(self, r, lb, ub):
-        """
-        Cortical monomer
-        """
-        self.pm1[lb:ub] += (r[25] + r[1] - r[2] - 2 * r[3] + 2 * r[4] - r[5] + r[6] - r[7]) * self.params.deltat
+    def update_pc2(self, r):
+        self.pc2 += (- (self.psi * r[9]) + (self.psi * np.mean(r[10])) + (self.psi * np.mean(r[13])) + (
+            self.psi * np.mean(r[15])) + r[21] - r[22]) * self.deltat
 
-    def update_pm2s(self, r, lb, ub):
-        """
-        Cortical dimer (singly bound)
-        """
-        self.pm2s[lb:ub] += (r[26] + r[5] - r[6] + r[9] - r[10] - r[11] + r[12] - r[13]) * self.params.deltat
-
-    def update_pm2d(self, r, lb, ub):
-        """
-        Cortical dimer (doubly bound)
-        """
-        self.pm2d[lb:ub] += (r[27] + r[3] - r[4] + r[11] - r[12] - r[15]) * self.params.deltat
-
-    def update_pc1(self, r, lb, ub):
-        """
-        Cytoplasmic monomer
-        """
-        x = (ub - lb) / self.params.xsteps
-        self.pc1 += ((- (x * self.params.psi) * r[1]) + ((x * self.params.psi) * np.mean(r[2])) - (
-            (x * self.params.psi) * np.mean(
-                r[5])) + ((x * self.params.psi) * np.mean(r[6])) + (x * self.params.psi) * np.mean(r[7]) - 2 * r[
-                         21] + 2 *
-                     r[
-                         22]) * self.params.deltat
-
-    def update_pc2(self, r, lb, ub):
-        """
-        Cytoplasmic dimer
-        """
-        x = (ub - lb) / self.params.xsteps
-        self.pc2 += (- (x * self.params.psi) * r[9] + (x * self.params.psi) * np.mean(r[10]) + (
-            x * self.params.psi) * np.mean(
-            r[13]) + (x * self.params.psi) * np.mean(r[15]) + r[21] - r[22]) * self.params.deltat
-
-    def get_all(self):
-        return [self.am, self.ac, self.pm1, self.pm2s, self.pm2d, self.pc1, self.pc2]
+    def react(self):
+        r = self.reactions()
+        self.update_am(r)
+        self.update_ac(r)
+        self.update_pm1(r)
+        self.update_pm2s(r)
+        self.update_pm2d(r)
+        self.update_pc1(r)
+        self.update_pc2(r)
 
     def run(self):
-        self.__init__(self.params)  # <- temporary fix
-        for t in range(int(self.params.Tmax / self.params.deltat)):
-            r1 = self.reactions(0, self.params.xsteps // 2)
-            self.update_am(r1, 0, self.params.xsteps // 2)
-            self.update_ac(r1, 0, self.params.xsteps // 2)
+        for t in range(int(self.Tmax / self.deltat)):
+            self.react()
+            self.time = (t + 1) * self.deltat
 
-            r2 = self.reactions(self.params.xsteps // 2, self.params.xsteps)
-            self.update_pm1(r2, self.params.xsteps // 2, self.params.xsteps)
-            self.update_pm2s(r2, self.params.xsteps // 2, self.params.xsteps)
-            self.update_pm2d(r2, self.params.xsteps // 2, self.params.xsteps)
-            self.update_pc1(r2, self.params.xsteps // 2, self.params.xsteps)
-            self.update_pc2(r2, self.params.xsteps // 2, self.params.xsteps)
-        self.res.update(-1, self.get_all())
-
-        for t in range(int(self.params.Tmax / self.params.deltat)):
-            r = self.reactions(0, self.params.xsteps)
-            self.update_am(r, 0, self.params.xsteps)
-            self.update_ac(r, 0, self.params.xsteps)
-            self.update_pm1(r, 0, self.params.xsteps)
-            self.update_pm2s(r, 0, self.params.xsteps)
-            self.update_pm2d(r, 0, self.params.xsteps)
-            self.update_pc1(r, 0, self.params.xsteps)
-            self.update_pc2(r, 0, self.params.xsteps)
-            self.res.update(t, self.get_all())
-        return self.res
-
-    class Res:
-        def __init__(self, params):
-            self.params = params
-            self.scores = {}
-            self.am = np.zeros([int(self.params.Tmax / self.params.deltat) + 1, self.params.xsteps])
-            self.ac = np.zeros([int(self.params.Tmax / self.params.deltat) + 1])
-            self.pm1 = np.zeros([int(self.params.Tmax / self.params.deltat) + 1, self.params.xsteps])
-            self.pm2s = np.zeros([int(self.params.Tmax / self.params.deltat) + 1, self.params.xsteps])
-            self.pm2d = np.zeros([int(self.params.Tmax / self.params.deltat) + 1, self.params.xsteps])
-            self.pc1 = np.zeros([int(self.params.Tmax / self.params.deltat) + 1])
-            self.pc2 = np.zeros([int(self.params.Tmax / self.params.deltat) + 1])
-
-            self.aco = np.zeros([int(self.params.Tmax / self.params.deltat) + 1, self.params.xsteps])
-            self.pco = np.zeros([int(self.params.Tmax / self.params.deltat) + 1, self.params.xsteps])
-
-            self.pc1 = np.zeros([int(self.params.Tmax / self.params.deltat) + 1])
-            self.pc2 = np.zeros([int(self.params.Tmax / self.params.deltat) + 1])
-
-            self.atot = np.zeros([int(self.params.Tmax / self.params.deltat) + 1])
-            self.ptot = np.zeros([int(self.params.Tmax / self.params.deltat) + 1])
-
-        def update(self, t, c):
-            self.am[t + 1, :] = c[0]
-            self.ac[t + 1] = c[1]
-            self.pm1[t + 1, :] = c[2]
-            self.pm2s[t + 1, :] = c[3]
-            self.pm2d[t + 1, :] = c[4]
-            self.pc1[t + 1] = c[5]
-            self.pc2[t + 1] = c[6]
-
-            self.aco[t + 1, :] = c[0]
-            self.pco[t + 1, :] = c[2] + 2 * c[3] + 2 * c[4]
-
-            self.atot[t + 1] = c[1] + self.params.psi * np.mean(c[0])
-            self.ptot[t + 1] = c[5] + 2 * c[6] + self.params.psi * np.mean(c[2] + 2 * c[3] + 2 * c[4])
-
-        def compress(self):
-            self.am = np.asarray([self.am[-1, :], ])
-            self.ac = self.ac[-1]
-            self.pm1 = np.asarray([self.pm1[-1, :], ])
-            self.pm2s = np.asarray([self.pm2s[-1, :], ])
-            self.pm2d = np.asarray([self.pm2d[-1, :], ])
-            self.pc1 = self.pc1[-1]
-            self.pc2 = self.pc2[-1]
-
-            self.aco = np.asarray([self.aco[-1, :], ])
-            self.pco = np.asarray([self.pco[-1, :], ])
+    def save(self, direc):
+        np.savetxt(direc + 'am.txt', self.am)
+        np.savetxt(direc + 'ac.txt', [self.ac])
+        np.savetxt(direc + 'pm1.txt', [self.pm1])
+        np.savetxt(direc + 'pm2s.txt', self.pm2s)
+        np.savetxt(direc + 'pm2d.txt', self.pm2d)
+        np.savetxt(direc + 'pc1.txt', [self.pc1])
+        np.savetxt(direc + 'pc2.txt', [self.pc2])
+        np.savetxt(direc + 'time.txt', [self.time])
 
 
-p0 = Params(Da=1, kon_a=1, koff_a=1, ra=1, Dp=1, kon_p=1, koff_p=1, kon_p_2=5, kd_f=2, kd_b=1, rp=1, L=50, xsteps=500,
-            psi=0.3, Tmax=100, deltat=0.01, starts=[0, 1, 0, 0, 0, 1, 0])
+# def func()
+#     r = [None] * 28
+#     r[1] = self.kon_p * self.pc1
+#     r[2] = self.koff_p * self.pm1
+#     r[3] = self.kd_f * self.pm1 ** 2
+#     r[4] = self.kd_b * self.pm2d
+#     r[5] = self.kd_f * self.pc1 * self.pm1
+#     r[6] = self.kd_b * self.pm2s
+#     r[7] = self.rp * self.am * self.pm1
+#     r[9] = self.kon_p * self.pc2
+#     r[10] = self.koff_p * self.pm2s
+#     r[11] = self.kon_p_2 * self.pm2s
+#     r[12] = self.koff_p * self.pm2d
+#     r[13] = self.rp * self.am * self.pm2s
+#     r[15] = self.rp * self.am * self.pm2d
+#     r[21] = self.kd_f * self.pc1 ** 2
+#     r[22] = self.kd_b * self.pc2
+#     r[17] = self.kon_a * self.ac
+#     r[18] = self.koff_a * self.am
+#     r[19] = self.ra * (self.pm1 + self.pm2s + self.pm2d) * self.am
+#
+#     self.pm1 += (r[1] - r[2] - 2 * r[3] + 2 * r[4] - r[5] + r[6] - r[7])
+#     self.pm2s += (r[5] - r[6] + r[9] - r[10] - r[11] + r[12] - r[13])
+#     self.pm2d += (r[3] - r[4] + r[11] - r[12] - r[15])
+#     self.pc1 += ((- self.psi * r[1]) + (self.psi * np.mean(r[2])) - (self.psi * np.mean(r[5])) + (
+#         self.psi * np.mean(r[6])) + (self.psi * np.mean(r[7])) - (2 * r[21]) + (2 * r[22]))
+#     self.pc2 += (- (self.psi * r[9]) + (self.psi * np.mean(r[10])) + (self.psi * np.mean(r[13])) + (
+#         self.psi * np.mean(r[15])) + r[21] - r[22])
