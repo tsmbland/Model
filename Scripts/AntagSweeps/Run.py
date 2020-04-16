@@ -24,7 +24,7 @@ if int(sys.argv[1]) == 1:
 
     a = ParamSweep(base_model, p1='kAP', p2='kPA', p1_range=(-3, 0), p2_range=(-3, 0), log=True, cores=32, resolution=2,
                    n_iterations=10, direc=save_direc + '/1')
-    a.sweep()
+    a.run()
 
 """
 2: Generic, non-linear feedback
@@ -38,7 +38,7 @@ if int(sys.argv[1]) == 2:
 
     a = ParamSweep(base_model, p1='kAP', p2='kPA', p1_range=(-3, 0), p2_range=(-3, 0), log=True, cores=32, resolution=2,
                    n_iterations=10, direc=save_direc + '/2')
-    a.sweep()
+    a.run()
 
 """
 3: Generic, non-linear on (weak)
@@ -52,7 +52,7 @@ if int(sys.argv[1]) == 3:
 
     a = ParamSweep(base_model, p1='kAP', p2='kPA', p1_range=(-3, 0), p2_range=(-3, 0), log=True, cores=32, resolution=2,
                    n_iterations=10, direc=save_direc + '/3')
-    a.sweep()
+    a.run()
 
 """
 4: Generic, non-linear on (strong)
@@ -66,7 +66,7 @@ if int(sys.argv[1]) == 4:
 
     a = ParamSweep(base_model, p1='kAP', p2='kPA', p1_range=(-3, 0), p2_range=(-3, 0), log=True, cores=32, resolution=2,
                    n_iterations=10, direc=save_direc + '/4')
-    a.sweep()
+    a.run()
 
 """
 5: Generic, both (weak)
@@ -80,7 +80,7 @@ if int(sys.argv[1]) == 5:
 
     a = ParamSweep(base_model, p1='kAP', p2='kPA', p1_range=(-3, 0), p2_range=(-3, 0), log=True, cores=32, resolution=2,
                    n_iterations=10, direc=save_direc + '/5')
-    a.sweep()
+    a.run()
 
 """
 6: Generic, both (strong)
@@ -94,7 +94,7 @@ if int(sys.argv[1]) == 6:
 
     a = ParamSweep(base_model, p1='kAP', p2='kPA', p1_range=(-3, 0), p2_range=(-3, 0), log=True, cores=32, resolution=2,
                    n_iterations=10, direc=save_direc + '/6')
-    a.sweep()
+    a.run()
 
 """
 7: PAR, linear
@@ -115,7 +115,7 @@ if int(sys.argv[1]) == 7:
 
     a = ParamSweep(base_model, p1='kAP', p2='kPA', p1_range=(-3, 0), p2_range=(-3, 0), log=True, cores=32, resolution=2,
                    n_iterations=10, direc=save_direc + '/7')
-    a.sweep()
+    a.run()
 
 """
 8: PAR, non-linear feedback
@@ -136,7 +136,7 @@ if int(sys.argv[1]) == 8:
 
     a = ParamSweep(base_model, p1='kAP', p2='kPA', p1_range=(-3, 0), p2_range=(-3, 0), log=True, cores=32, resolution=2,
                    n_iterations=10, direc=save_direc + '/8')
-    a.sweep()
+    a.run()
 
 """
 9: PAR, non-linear on (ols)
@@ -157,7 +157,7 @@ if int(sys.argv[1]) == 9:
 
     a = ParamSweep(base_model, p1='kAP', p2='kPA', p1_range=(-3, 0), p2_range=(-3, 0), log=True, cores=32, resolution=2,
                    n_iterations=10, direc=save_direc + '/9')
-    a.sweep()
+    a.run()
 
 """
 10: PAR, both (ols)
@@ -178,7 +178,7 @@ if int(sys.argv[1]) == 10:
 
     a = ParamSweep(base_model, p1='kAP', p2='kPA', p1_range=(-3, 0), p2_range=(-3, 0), log=True, cores=32, resolution=2,
                    n_iterations=10, direc=save_direc + '/10')
-    a.sweep()
+    a.run()
 
 """
 11: PAR, non-linear on (odr), wide
@@ -199,7 +199,7 @@ if int(sys.argv[1]) == 11:
 
     a = ParamSweep(base_model, p1='kAP', p2='kPA', p1_range=(-4, 0), p2_range=(-4, 0), log=True, cores=32, resolution=2,
                    n_iterations=10, direc=save_direc + '/11')
-    a.sweep()
+    a.run()
 
 """
 12: PAR, both (odr)
@@ -220,7 +220,7 @@ if int(sys.argv[1]) == 12:
 
     a = ParamSweep(base_model, p1='kAP', p2='kPA', p1_range=(-4, 0), p2_range=(-4, 0), log=True, cores=32, resolution=2,
                    n_iterations=10, direc=save_direc + '/12')
-    a.sweep()
+    a.run()
 
 """
 13: PAR, both (odr), long, wide
@@ -241,7 +241,7 @@ if int(sys.argv[1]) == 13:
 
     a = ParamSweep(base_model, p1='kAP', p2='kPA', p1_range=(-4, 0), p2_range=(-4, 0), log=True, cores=32, resolution=2,
                    n_iterations=10, direc=save_direc + '/13')
-    a.sweep()
+    a.run()
 
 """
 14: PAR, non-linear on (odr), long, wide
@@ -262,7 +262,7 @@ if int(sys.argv[1]) == 14:
 
     a = ParamSweep(base_model, p1='kAP', p2='kPA', p1_range=(-4, 0), p2_range=(-4, 0), log=True, cores=32, resolution=2,
                    n_iterations=10, direc=save_direc + '/14')
-    a.sweep()
+    a.run()
 
 """
 15: PAR, non-linear on (odr), long
@@ -283,7 +283,7 @@ if int(sys.argv[1]) == 15:
 
     a = ParamSweep(base_model, p1='kAP', p2='kPA', p1_range=(-3, 0), p2_range=(-3, 0), log=True, cores=32, resolution=2,
                    n_iterations=10, direc=save_direc + '/15')
-    a.sweep()
+    a.run()
 
 """
 16: PAR, linear, long, wide
@@ -304,7 +304,7 @@ if int(sys.argv[1]) == 16:
 
     a = ParamSweep(base_model, p1='kAP', p2='kPA', p1_range=(-4, 0), p2_range=(-4, 0), log=True, cores=32, resolution=2,
                    n_iterations=10, direc=save_direc + '/16')
-    a.sweep()
+    a.run()
 
 """
 17: PAR (RING mutant), linear, long, wide
@@ -325,7 +325,7 @@ if int(sys.argv[1]) == 17:
 
     a = ParamSweep(base_model, p1='kAP', p2='kPA', p1_range=(-4, 0), p2_range=(-4, 0), log=True, cores=32, resolution=2,
                    n_iterations=10, direc=save_direc + '/17')
-    a.sweep()
+    a.run()
 
 """
 18: PAR, non-linear feedback, long
@@ -346,7 +346,7 @@ if int(sys.argv[1]) == 18:
 
     a = ParamSweep(base_model, p1='kAP', p2='kPA', p1_range=(-3, 0), p2_range=(-3, 0), log=True, cores=32, resolution=2,
                    n_iterations=10, direc=save_direc + '/18')
-    a.sweep()
+    a.run()
 
 """
 19: PAR, both (odr), long
@@ -367,4 +367,4 @@ if int(sys.argv[1]) == 19:
 
     a = ParamSweep(base_model, p1='kAP', p2='kPA', p1_range=(-3, 0), p2_range=(-3, 0), log=True, cores=32, resolution=2,
                    n_iterations=10, direc=save_direc + '/19')
-    a.sweep()
+    a.run()

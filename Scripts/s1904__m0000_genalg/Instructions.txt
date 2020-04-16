@@ -1,4 +1,0 @@
-Parameters:
-
-Number of generations
-Populations per generation

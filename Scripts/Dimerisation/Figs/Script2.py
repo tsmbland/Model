@@ -331,9 +331,9 @@ def func(direc):
 
 
 #
-# # func('/Volumes/lab-goehringn/working/Tom/ModelData/Dimerisation50x50,4oom/0/')
-# # func('/Volumes/lab-goehringn/working/Tom/ModelData/Dimerisation/1/')
-# # func('/Volumes/lab-goehringn/working/Tom/ModelData/Dimerisation50x50,4oom/2/')
+# # bistability('/Volumes/lab-goehringn/working/Tom/ModelData/Dimerisation50x50,4oom/0/')
+# # bistability('/Volumes/lab-goehringn/working/Tom/ModelData/Dimerisation/1/')
+# # bistability('/Volumes/lab-goehringn/working/Tom/ModelData/Dimerisation50x50,4oom/2/')
 # plt.show()
 
 """
@@ -342,7 +342,7 @@ Single non-linearity fit
 """
 
 
-# def func(name):
+# def bistability(name):
 #     mems = np.loadtxt(direc + '/' + name + '/pco.txt')
 #     cyts = np.loadtxt(direc + '/' + name + '/pcy.txt')
 #     results = np.polyfit(np.log10(cyts[1:]), np.log10(mems[1:]), 1)
@@ -356,4 +356,4 @@ Single non-linearity fit
 #     plt.show()
 #
 #
-# func('1.579_1.579')
+# bistability('1.579_1.579')

@@ -4,11 +4,11 @@ import matplotlib
 
 import numpy as np
 import copy
-from AdvancedFuncs import ParamSweepGeneral
+from Funcs import Bifurcation2D
 from Models.SimplePosFeedback import Model
 
 """
-Parameter sweep
+Parameter run
 
 """
 
@@ -58,6 +58,6 @@ base_model = Model(Da=0.095, Dp=0.15, konA=18.4 * koffA, koffA=koffA, kposA=0, k
                    deltax=0.5,
                    psi=psi, am_0=np.zeros([100]), ac_0=dosA, pm_0=np.zeros([100]), pc_0=dosP)
 
-a = ParamSweepGeneral(func, p1_range=(-3, 0), p2_range=(-3, 0), log=True, cores=8,
-                      resolution0=5, resolution=2, n_iterations=10, direc='_temp')
-a.sweep()
+a = Bifurcation2D(func, p1_range=(-3, 0), p2_range=(-3, 0), log=True, cores=8,
+                  resolution0=5, resolution_step=2, n_iterations=10, direc='_temp')
+a.run()
