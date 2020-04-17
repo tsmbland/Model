@@ -263,7 +263,6 @@ class Bifurcation2D:
         :param func: function - takes 2 parameters, returns an integer (must not be zero)
         :param p1_range: range for parameter 1 - (lower, upper)
         :param p2_range: range for parameter 2 - (lower, upper)
-        :param log: if TRUE will apply log10 to parameter values
         :param cores: number of cores on machine to use in parallel
         :param resolution0: n x n points on initial grid
         :param resolution_step: how much resolution increases with each time step
@@ -348,7 +347,7 @@ class Bifurcation2D:
             # Parameter combinations
             sims_array_ind = np.nonzero(run_bool)
             p1vals = self.p1_range[0] + sims_array_ind[0] * (self.p1_range[1] - self.p1_range[0]) / (self.n_sims - 1)
-            p2vals = self.p2_range[0] + sims_array_ind[1] * (self.p2_range[1] - self.p1_range[0]) / (self.n_sims - 1)
+            p2vals = self.p2_range[0] + sims_array_ind[1] * (self.p2_range[1] - self.p2_range[0]) / (self.n_sims - 1)
 
             # Run
             if self.parallel:
@@ -384,7 +383,7 @@ class Bifurcation2D:
                     if j != 0:
                         p1vals = self.p1_range[0] + sims_array_ind[0] * (self.p1_range[1] - self.p1_range[0]) / (
                             self.n_sims - 1)
-                        p2vals = self.p2_range[0] + sims_array_ind[1] * (self.p2_range[1] - self.p1_range[0]) / (
+                        p2vals = self.p2_range[0] + sims_array_ind[1] * (self.p2_range[1] - self.p2_range[0]) / (
                             self.n_sims - 1)
 
                         # Run
@@ -446,7 +445,7 @@ class Bifurcation2D:
             xpoints = np.r_[a[0], b[0], c[0]] + 1
             ypoints = np.r_[a[1], b[1], c[1]] + 1
             xpoints = self.p1_range[0] + xpoints * (self.p1_range[1] - self.p1_range[0]) / self.n_sims
-            ypoints = self.p2_range[0] + ypoints * (self.p2_range[1] - self.p1_range[0]) / self.n_sims
+            ypoints = self.p2_range[0] + ypoints * (self.p2_range[1] - self.p2_range[0]) / self.n_sims
             ax.scatter(xpoints, ypoints, s=0.1, c='k')
 
         # Save figure
