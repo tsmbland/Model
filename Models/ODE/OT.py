@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.integrate import odeint
-from Funcs import Bifurcation2D
+from Funcs import ParamSpaceQual2D
 import matplotlib.pyplot as plt
 
 """

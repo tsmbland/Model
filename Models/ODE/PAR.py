@@ -1,6 +1,15 @@
 import numpy as np
 from scipy.integrate import odeint
-from Funcs import Bifurcation2D
+
+
+# import os
+# import sys
+#
+# home_direc = os.path.dirname(os.path.realpath(__file__))
+# sys.path.append(home_direc)
+# sys.path.append(home_direc + '/../..')
+#
+# # from Funcs import Bifurcation2D
 
 
 ###############################################################################
@@ -206,21 +215,24 @@ pP      = ?
 
 # import time
 #
+#
+# def evaluate1(pP, kposP):
+#     konP0 = 0.1
+#     y0 = (0.1 * 1) / (0.1 * 0.1 + 0.01)
+#     konP = konP0 - (kposP * y0)
+#
+#     return PAR(konA=0.1, koffA=0.01, kposA=0, konP=konP, koffP=0.01, kposP=kposP, ePneg=1, eAneg=1, psi=0.1,
+#                pA=1, pP=pP, kAP=0.1, kPA=0.1).bistability_instability()
+#
+#
+# # t = time.time()
+# # a = Bifurcation2D(evaluate1, p1_range=(0, 5), p2_range=(0, 0.02), cores=4, resolution0=50,
+# #                   resolution_step=2, n_iterations=4, direc='_test', parallel=True, crange=[1, 6])
+# # a.run()
+# # print(time.time() - t)
+#
 # t = time.time()
-#
-#
-def evaluate1(pP, kposP):
-    konP0 = 0.1
-    y0 = (0.1 * 1) / (0.1 * 0.1 + 0.01)
-    konP = konP0 - (kposP * y0)
-
-    return PAR(konA=0.1, koffA=0.01, kposA=0, konP=konP, koffP=0.01, kposP=kposP, ePneg=1, eAneg=1, psi=0.1,
-               pA=1, pP=pP, kAP=0.1, kPA=0.1).bistability_instability()
-
-
-# a = Bifurcation2D(evaluate1, p1_range=(0, 5), p2_range=(0, 0.02), log=False, cores=4, resolution0=50,
-#                   resolution_step=2, n_iterations=3, direc='_test', parallel=True, crange=[1, 6])
-#
+# a = Bifurcation2D(evaluate1, p1_range=(0, 5), p2_range=(0, 0.02), cores=4, resolution0=50,
+#                   resolution_step=2, n_iterations=5, direc='_test2', parallel=True, crange=[1, 6])
 # a.run()
-#
 # print(time.time() - t)

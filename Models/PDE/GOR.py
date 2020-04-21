@@ -36,9 +36,9 @@ class GOR:
 
         # Initial equilibration
         Tmax = self.Tmax / 10
-        soln, times = pdeRK(dxdt=self.dxdt, X0=[self.U], Tmax=Tmax, deltat=self.deltat,
-                            t_eval=np.arange(0, Tmax + 0.0001, Tmax))
-        self.U = soln[0][-1, :]
+        soln, time, solns, times = pdeRK(dxdt=self.dxdt, X0=[self.U], Tmax=Tmax, deltat=self.deltat,
+                                         t_eval=np.arange(0, Tmax + 0.0001, Tmax))
+        self.U = soln[0]
 
         # Polarise
         self.U *= 2 * np.r_[np.zeros([self.xsteps // 2]), np.ones([self.xsteps // 2])]
@@ -48,13 +48,13 @@ class GOR:
             save_gap = self.Tmax
 
         # Run
-        soln, times = pdeRK(dxdt=self.dxdt, X0=[self.U], Tmax=self.Tmax, deltat=self.deltat,
-                            t_eval=np.arange(0, self.Tmax + 0.0001, save_gap))
-        self.U = soln[0][-1, :]
+        soln, time, solns, times = pdeRK(dxdt=self.dxdt, X0=[self.U], Tmax=self.Tmax, deltat=self.deltat,
+                                         t_eval=np.arange(0, self.Tmax + 0.0001, save_gap))
+        self.U = soln[0]
 
         # Save
         if save_direc is not None:
-            np.savetxt(save_direc + '/U.txt', soln[0])
+            np.savetxt(save_direc + '/U.txt', solns[0])
             np.savetxt(save_direc + '/times.txt', times)
 
     def polarised(self):

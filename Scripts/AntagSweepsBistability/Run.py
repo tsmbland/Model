@@ -6,7 +6,7 @@ sys.path.append(home_direc)
 sys.path.append(home_direc + '/../..')
 save_direc = home_direc + '/../../../../ModelData/AntagSweepsBistability/'
 
-from Funcs import Bifurcation2D
+from Funcs import ParamSpaceQual2D
 
 # print(sys.argv[1])
 #

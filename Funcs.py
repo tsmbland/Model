@@ -6,7 +6,83 @@ import numpy as np
 import os
 import multiprocessing
 import matplotlib.pyplot as plt
+from matplotlib.widgets import Slider
 import itertools
+
+"""
+Evaluate functions
+
+"""
+
+
+def evaluate(func, xrange, yrange, resolution0=1000, iterations=1, resolution_step=2, args=()):
+    """
+    Solve a function in the form 0 = f(x, y)
+
+    :param func: function to solve (0 = f(x,y,*args))
+    :param xrange: (lower x, upper x)
+    :param yrange: (lower y, upper y)
+    :param resolution0: resolution of grid space for first iteration
+    :param iterations: if > 1 will iteratively refine solution by increasing resolution by factor of resolution_step
+    :param resolution_step:
+    :param args: additional arguments for func
+    :return: two 1D arrays of points corresponding to x and y coordinates. NB these are UNORDERED, plot using
+        plt.scatter(xpoints,ypoints)
+
+
+    """
+
+    for iteration in range(iterations):
+
+        if iteration == 0:
+
+            # Set x and y values
+            n_sims = resolution0
+            xvals = np.linspace(xrange[0], xrange[1], n_sims)
+            yvals = np.linspace(yrange[0], yrange[1], n_sims)
+
+            # Evaluate
+            res = func(np.tile(xvals, (n_sims, 1)).T, np.tile(yvals, (n_sims, 1)), *args)
+            res_2d_sign = np.sign(res)
+
+        else:
+            # Find boundary regions
+            a = np.nonzero(np.nan_to_num(np.diff(res_2d_sign, axis=0)))
+            b = np.nonzero(np.nan_to_num(np.diff(res_2d_sign, axis=1)))
+            c = np.nonzero(np.nan_to_num(res_2d_sign[:-1, :-1] - res_2d_sign[1:, 1:]))
+            xpoints = np.r_[a[0], b[0], c[0]]
+            ypoints = np.r_[a[1], b[1], c[1]]
+
+            # Set x and y values
+            n_sims = resolution_step * (n_sims - 1) + 1
+
+            run_bool = np.zeros([n_sims, n_sims])
+            for x, y in zip(xpoints, ypoints):
+                run_bool[x * resolution_step:x * resolution_step + (resolution_step + 1),
+                y * resolution_step:y * resolution_step + (resolution_step + 1)] = 1
+            sims_array_ind = np.nonzero(run_bool)
+            xvals = xrange[0] + sims_array_ind[0] * (xrange[1] - xrange[0]) / (n_sims - 1)
+            yvals = yrange[0] + sims_array_ind[1] * (yrange[1] - yrange[0]) / (n_sims - 1)
+
+            # Evaluate
+            res = func(xvals, yvals, *args)
+
+            # Organise res
+            res_2d = np.nan * np.zeros([n_sims, n_sims])
+            for r in range(len(res)):
+                res_2d[sims_array_ind[0][r], sims_array_ind[1][r]] = res[r]
+            res_2d_sign = np.sign(res_2d)
+
+    a = np.nonzero(np.nan_to_num(np.diff(res_2d_sign, axis=0)))
+    b = np.nonzero(np.nan_to_num(np.diff(res_2d_sign, axis=1)))
+    c = np.nonzero(np.nan_to_num(res_2d_sign[:-1, :-1] - res_2d_sign[1:, 1:]))
+    xpoints = np.r_[a[0], b[0], c[0]]
+    ypoints = np.r_[a[1], b[1], c[1]]
+
+    xpoints = xrange[0] + (xpoints / n_sims) * (xrange[1] - xrange[0])
+    ypoints = yrange[0] + (ypoints / n_sims) * (yrange[1] - yrange[0])
+    return xpoints, ypoints
+
 
 """
 PDE solver
@@ -14,28 +90,41 @@ PDE solver
 """
 
 
-def diffusion(concs, dx):
+def diffusion(concs, dx=1):
+    """
+    Simulate single diffusion time step, with reflective boundary conditions
+
+    :param concs: 1D array of concentrations across space
+    :param dx: optional, spatial distance between points
+    :return:
+    """
+
     d = concs[np.r_[np.array(range(1, len(concs))), len(concs) - 1]] - 2 * concs + concs[
         np.r_[0, np.array(range(len(concs) - 1))]]
     return d / (dx ** 2)
 
 
-def pdeRK(dxdt, X0, Tmax, deltat, t_eval):
+def pdeRK(dxdt, X0, Tmax, deltat, t_eval, killfunc=None, stabilitycheck=False):
     """
+
+    Function for solving system of PDEs using adaptive Runge-Kutta method
     Adapted from Hubatsch 2019
 
-    :param dxdt:
-    :param X0:
-    :param Tmax:
-    :param deltat:
-    :param t_eval:
+    :param dxdt: function, takes list of 1D arrays corresponding to concentrations over space, returns list of gradients
+    :param X0: starting conditions, list of 1D arrays
+    :param Tmax: maximum time
+    :param deltat: initial timestep
+    :param t_eval: array of timepoints to save
+    :param killfunc: optional func, takes same input as dxdt, integration will terminate when func returns True
+    :param stabilitycheck: if True, will terminate integration when system changes by less that 1% per minute
 
-    To do:
-    - way to break if system stabilises before time limit is reached
+    Returns
+    X: final state
+    time: final time
+    X_stored: saved states according to t_eval
+    t_stored: times corresponding to X_stored. Will npt be exactly the same as t_eval but should be close
 
     """
-
-    time = 0
 
     # Adaptive step size parameters
     atol = 0.000001
@@ -61,10 +150,11 @@ def pdeRK(dxdt, X0, Tmax, deltat, t_eval):
     nvars = len(testsoln)
     spatial_points = len(testsoln[0])
     t_stored = np.zeros([len(t_eval)])
-    X_stored = [np.zeros([len(t_eval), spatial_points]) for i in range(nvars)]
-    stored_times = 0
+    X_stored = [np.zeros([len(t_eval), spatial_points]) for _ in range(nvars)]
+    n_stored_times = 0
 
     # Run
+    time = 0
     updated = None
     terminate = False
     while not terminate:
@@ -106,6 +196,7 @@ def pdeRK(dxdt, X0, Tmax, deltat, t_eval):
         totalerror = np.sqrt(sum(errs) / nvars)
 
         # Compute new timestep
+        # sometimes see "RuntimeWarning: divide by zero encountered in double_scalars". Need to look into
         dtnew = 0.8 * deltat * abs(1 / totalerror) ** (1 / 5)
 
         # Upper and lower bound for timestep to avoid changing too fast
@@ -113,6 +204,9 @@ def pdeRK(dxdt, X0, Tmax, deltat, t_eval):
             dtnew = 10 * deltat
         elif dtnew < deltat / 5:
             dtnew = deltat / 5
+
+        # Compute max percentage change
+        change = max(max(abs(X[i] - Xn_new[i]) / Xn_new[i]) * (60 / dtnew) for i in range(nvars))
 
         # Set timestep for next round
         deltat = dtnew
@@ -123,122 +217,69 @@ def pdeRK(dxdt, X0, Tmax, deltat, t_eval):
             X = Xn_new
             updated = True
 
-            # Save
-            if sum(time > t_eval) > stored_times:
-                t_stored[stored_times] = time
+            # Store
+            if sum(time > t_eval) > n_stored_times:
+                t_stored[n_stored_times] = time
                 for i in range(nvars):
-                    X_stored[i][stored_times, :] = X[i]
-                stored_times += 1
+                    X_stored[i][n_stored_times, :] = X[i]
+                n_stored_times += 1
+
+            # Kill function
+            if killfunc is not None:
+                brk = killfunc(X)
+                if brk:
+                    break
+
+            # Check stability:
+            if stabilitycheck:
+                if change < 0.001:
+                    break
+
         else:
             updated = False
 
-    return X_stored, t_stored
+    return X, time, X_stored, t_stored
 
 
 """
-Evaluate 
-
-"""
-
-
-def evaluate(func, xrange, yrange, iterations, resolution=100, args=()):
-    """
-
-    :param func: function to solve, takes x and y as arguments
-    :param xrange: (lower x, upper x)
-    :param yrange: (lower y, upper y)
-    :param iterations:
-    :param resolution: resolution of grid space for first iteration
-    :param args: extra arguments for bistability
-    :return:
-    """
-
-    for iteration in range(iterations):
-
-        if iteration == 0:
-
-            # Set x and y values
-            n_sims = resolution
-            xvals = np.linspace(xrange[0], xrange[1], n_sims)
-            yvals = np.linspace(yrange[0], yrange[1], n_sims)
-
-            # Evaluate
-            res = func(np.tile(xvals, (n_sims, 1)).T, np.tile(yvals, (n_sims, 1)), *args)
-            res_2d_sign = np.sign(res)
-
-        else:
-            # Find boundary regions
-            a = np.nonzero(np.nan_to_num(np.diff(res_2d_sign, axis=0)))
-            b = np.nonzero(np.nan_to_num(np.diff(res_2d_sign, axis=1)))
-            c = np.nonzero(np.nan_to_num(res_2d_sign[:-1, :-1] - res_2d_sign[1:, 1:]))
-            xpoints = np.r_[a[0], b[0], c[0]]
-            ypoints = np.r_[a[1], b[1], c[1]]
-
-            # Set x and y values
-            n_sims = resolution * (n_sims - 1) + 1
-            run_bool = np.zeros([n_sims, n_sims])
-            for x, y in zip(xpoints, ypoints):
-                run_bool[x * resolution:x * resolution + (resolution + 1),
-                y * resolution:y * resolution + (resolution + 1)] = 1
-            sims_array_ind = np.nonzero(run_bool)
-            xvals = xrange[0] + sims_array_ind[0] * (xrange[1] - xrange[0]) / (n_sims - 1)
-            yvals = yrange[0] + sims_array_ind[1] * (yrange[1] - yrange[0]) / (n_sims - 1)
-
-            # Evaluate
-            res = func(xvals, yvals, *args)
-
-            # Organise res
-            res_2d = np.nan * np.zeros([n_sims, n_sims])
-            for r in range(len(res)):
-                res_2d[sims_array_ind[0][r], sims_array_ind[1][r]] = res[r]
-            res_2d_sign = np.sign(res_2d)
-
-    a = np.nonzero(np.nan_to_num(np.diff(res_2d_sign, axis=0)))
-    b = np.nonzero(np.nan_to_num(np.diff(res_2d_sign, axis=1)))
-    c = np.nonzero(np.nan_to_num(res_2d_sign[:-1, :-1] - res_2d_sign[1:, 1:]))
-    xpoints = np.r_[a[0], b[0], c[0]]
-    ypoints = np.r_[a[1], b[1], c[1]]
-
-    xpoints = xrange[0] + (xpoints / n_sims) * (xrange[1] - xrange[0])
-    ypoints = yrange[0] + (ypoints / n_sims) * (yrange[1] - yrange[0])
-    return xpoints, ypoints
-
-
-"""
-Parameter sweep
+Parameter space
 
 """
 
 
-class ParamSweep2D:
-    def __init__(self, func, p1_vals, p2_vals, direc, log=False, parallel=True, cores=None):
+class ParamSpaceQuant2D:
+    def __init__(self, func, p1_vals, p2_vals, direc, parallel=False, cores=None):
         """
-        Runs func with all combinations of p1_vals and p2_vals
-        Func must save the result to be used for later analysis
+        Runs func with all combinations of p1_vals and p2_vals, saves results to csv file
 
-        :param func:
-        :param p1_vals:
-        :param p2_vals:
-        :param direc:
-        :param log:
-        :param parallel:
-        :param cores:
+        :param func: function, takes two parameter values, returns a float
+        :param p1_vals: array of parameter 1 values
+        :param p2_vals: array of parameter 1 values
+        :param direc: directory to save results
+        :param parallel: if True, will run in parallel using number of cores specified
+        :param cores: number of cores to use, if parallel=True
+
+        To do:
+        - check that this works
+        - save results as txt file array
+        - ability to plot results from with the class
+
         """
         self.func = func
         self.p1_vals = p1_vals
         self.p2_vals = p2_vals
         self.cores = cores
         self.direc = direc
-        self.log = log
         self.parallel = parallel
 
-    def single(self, p1_val, p2_val):
+    def single_eval(self, p1val, p2val):
 
         # Run function
-        if self.log:
-            self.func(10 ** p1_val, 10 ** p2_val)
-        else:
-            self.func(p1_val, p2_val)
+        res = self.func(p1val, p2val)
+
+        # Save results
+        with open(self.direc + '/Res.csv', 'a') as f:
+            f.write("{:.12f}".format(p1val) + ',' + "{:.12f}".format(p2val) + ',' + str(res) + '\n')
 
     def run(self):
 
@@ -248,88 +289,127 @@ class ParamSweep2D:
         # Run
         if self.parallel:
             pool = multiprocessing.Pool(self.cores)
-            pool.starmap(self.single, iter(sims_array))
+            pool.starmap(self.single_eval, iter(sims_array))
         else:
             for k in iter(sims_array):
-                self.single(*k)
+                self.single_eval(*k)
 
 
-class Bifurcation2D:
-    def __init__(self, func, p1_range, p2_range, resolution0, resolution_step, n_iterations, direc,
-                 parallel=False, colours=None, crange=None, show_boundaries=False,
-                 cores=None):
+class ParamSpaceQual2D:
+    def __init__(self, func, p1_range, p2_range, resolution0, direc, resolution_step=2, n_iterations=1,
+                 parallel=False, cores=None, colours=None, crange=None, cmap=None, show_boundaries=False):
         """
 
-        :param func: function - takes 2 parameters, returns an integer (must not be zero)
-        :param p1_range: range for parameter 1 - (lower, upper)
-        :param p2_range: range for parameter 2 - (lower, upper)
-        :param cores: number of cores on machine to use in parallel
-        :param resolution0: n x n points on initial grid
-        :param resolution_step: how much resolution increases with each time step
-        :param n_iterations: number of iterations
-        :param direc: directory to save results. Must already exist
+        Functions to create qualitative phase space diagrams
 
+        Run by calling run function
+        - performs analysis, saves results with each iteration to .csv files, and saves final figure
+        - progress is saved, if interrupted can be resumed without loss by calling the run function again
+
+        Computation parameters
+        :param func: function - takes 2 parameters, returns an integer (must not be zero)
+        :param p1_range: range for parameter 1 (lower, upper)
+        :param p2_range: range for parameter 2 (lower, upper)
+        :param resolution0: n x n points on initial grid
+        :param resolution_step: how much resolution increases with each iteration
+        :param n_iterations: number of iterations
+        :param parallel: if True, will run in parallel using number of cores specified
+        :param cores: number of cores on machine to use in parallel
+
+        # Saving parameters
+        :param direc: directory to save results. Directory must already exist
+
+        # Figure parameters
+        :param colours: dictionary of function outputs (integers) to colour names. Or can use crange/cmap
+        :param crange: (lowest value, highest value)
+        :param cmap: if None, pyplot will use 'viridis'
+        :param show_boundaries: if True, will highlight region boundaries in black
 
         To do:
-        - save to single text file rather than loads of small files
-        - less importing
-        - use integer arrays? e.g. use 0 instead of np.nan
         - currently breaks if no boundaries are found
-        - also save condensed res array
+        - ability to start from higher iteration by importing
 
         """
 
+        # Computation
         self.func = func
         self.p1_range = p1_range
         self.p2_range = p2_range
-        self.cores = cores
         self.resolution0 = resolution0
         self.resolution_step = resolution_step
         self.n_iterations = n_iterations
-        self.direc = direc
         self.parallel = parallel
+        self.cores = cores
+
+        # Saving
+        self.direc = direc
+
+        # Figure
         self.colours = colours
         self.crange = crange
+        self.cmap = cmap
         self.show_boundaries = show_boundaries
 
         # Results
+        self.iteration = None
         self.res = None
         self.n_sims = None
 
-    def single(self, p1_val, p2_val):
+    def single_eval(self, p1val_p2val):
         """
-        Evaluate for given p1 and p2 values, save result
+        Single funciton call for given p1 and p2 values, save result
 
         """
 
-        name = '%s_%s' % (p1_val, p2_val)
+        # Run function
+        state = self.func(*[float(i) for i in p1val_p2val.split(',')])
 
-        # If bistability not already performed for these parameters
-        if not os.path.exists(self.direc + '/Res/' + name + '.txt'):
-            # Run function
-            state = self.func(p1_val, p2_val)
+        # Save state
+        with open(self.direc + '/' + str(self.iteration) + '.csv', 'a') as f:
+            f.write(p1val_p2val + ',' + str(state) + '\n')
 
-            # Save state
-            with open(self.direc + '/Res/' + name + '.txt', 'w') as f:
-                f.write('%d' % state)
+    def batch_eval(self, pcombs):
+        """
+        Evaluate parameter sets in bulk
+        pcombs is list of strings 'p1val,p2val'
+
+        """
+        if self.parallel:
+            pool = multiprocessing.Pool(self.cores)
+            pool.map(self.single_eval, pcombs)
+        else:
+            for k in iter(pcombs):
+                self.single_eval(k)
+
+    def import_res(self):
+        """
+        Import all results from current iteration, load into self.res
+
+        """
+
+        with open(self.direc + '/' + str(self.iteration) + '.csv') as g:
+            for line in g:
+                p1, p2, val = line[:-1].split(',')
+                xind = ((float(p1) - self.p1_range[0]) * (self.n_sims - 1)) / (self.p1_range[1] - self.p1_range[0])
+                yind = ((float(p2) - self.p2_range[0]) * (self.n_sims - 1)) / (self.p2_range[1] - self.p2_range[0])
+                self.res[round(xind), round(yind)] = int(val)
 
     def run(self):
         """
-        Run parameter sweep
+        Run algorithm, save figure
 
         """
 
-        # Create results folder
-        if not os.path.exists(self.direc + '/Res'):
-            os.mkdir(self.direc + '/Res')
-
         for iteration in range(self.n_iterations):
             print(iteration)
+            self.iteration = iteration
 
-            if iteration == 0:
+            # First iteration, initial grid
+            if self.iteration == 0:
                 self.n_sims = self.resolution0
                 run_bool = np.ones([self.n_sims, self.n_sims])
 
+            # Subsequent iteration, explore boundary regions
             else:
                 self.n_sims = self.resolution_step * (self.n_sims - 1) + 1
 
@@ -348,28 +428,40 @@ class Bifurcation2D:
             sims_array_ind = np.nonzero(run_bool)
             p1vals = self.p1_range[0] + sims_array_ind[0] * (self.p1_range[1] - self.p1_range[0]) / (self.n_sims - 1)
             p2vals = self.p2_range[0] + sims_array_ind[1] * (self.p2_range[1] - self.p2_range[0]) / (self.n_sims - 1)
+            pcombs = ["{:.12f}".format(p1vals[i]) + ',' + "{:.12f}".format(p2vals[i]) for i in range(len(p1vals))]
+
+            # Remove parameters already tested (if algorithm run before)
+            if os.path.isfile(self.direc + '/' + str(self.iteration) + '.csv'):
+                with open(self.direc + '/' + str(self.iteration) + '.csv') as f:
+                    for line in f:
+                        if line[:-3] in pcombs:
+                            pcombs.remove(line[:-3])
+
+            # Carry over combinations from previous iteration
+            if self.iteration != 0:
+                with open(self.direc + '/' + str(self.iteration - 1) + '.csv') as f:
+                    with open(self.direc + '/' + str(self.iteration) + '.csv', 'a') as g:
+                        for line in f:
+                            if line[:-3] in pcombs:
+                                pcombs.remove(line[:-3])
+                                g.write(line)
 
             # Run
-            if self.parallel:
-                pool = multiprocessing.Pool(self.cores)
-                pool.starmap(self.single, iter(np.c_[p1vals, p2vals]))
-            else:
-                for k in iter(np.c_[p1vals, p2vals]):
-                    self.single(*k)
+            self.batch_eval(pcombs)
 
-            # Compile results
+            # Import results
             self.res = np.nan * np.zeros([self.n_sims, self.n_sims])
-            for r in range(len(p1vals)):
-                name = '%s_%s' % (p1vals[r], p2vals[r])
-                with open(self.direc + '/Res/' + name + '.txt') as g:
-                    self.res[sims_array_ind[0][r], sims_array_ind[1][r]] = g.read()
+            self.import_res()
 
-            # Safety check: If any nans are adjacent to more than one type (in all directions), test them
-            if iteration != 0:
+            # Safety check: test any untested points directly adjacent to boundaries
+            # (often required if resolution0 or resolution_step are too small)
+            if self.iteration != 0:
                 j = 1
                 while j != 0:
 
-                    # Compare each nan value to all neighbours (this is quite slow, quicker way?)
+                    # Compare each nan value to all neighbours
+                    # (this is quite slow, quicker way?)
+                    # throws warning: "All-NaN axis encountered" - this is fine
                     x = np.dstack((self.res[:-2, :-2], self.res[:-2, 1:-1], self.res[:-2, 2:], self.res[1:-1, :-2],
                                    self.res[1:-1, 2:], self.res[2:, :-2], self.res[2:, 1:-1], self.res[2:, 2:]))
                     mx = np.nanmax(x, axis=2)
@@ -385,22 +477,16 @@ class Bifurcation2D:
                             self.n_sims - 1)
                         p2vals = self.p2_range[0] + sims_array_ind[1] * (self.p2_range[1] - self.p2_range[0]) / (
                             self.n_sims - 1)
+                        pcombs = ["{:.12f}".format(p1vals[i]) + ',' + "{:.12f}".format(p2vals[i]) for i in
+                                  range(len(p1vals))]
 
                         # Run
-                        if self.parallel:
-                            pool = multiprocessing.Pool(self.cores)
-                            pool.starmap(self.single, iter(np.c_[p1vals, p2vals]))
-                        else:
-                            for k in iter(np.c_[p1vals, p2vals]):
-                                self.single(*k)
+                        self.batch_eval(pcombs)
 
                         # Compile results
-                        for r in range(len(p1vals)):
-                            name = '%s_%s' % (p1vals[r], p2vals[r])
-                            with open(self.direc + '/Res/' + name + '.txt') as g:
-                                self.res[sims_array_ind[0][r], sims_array_ind[1][r]] = g.read()
+                        self.import_res()
 
-        # Interpolate nans - flood fill algorithm
+        # Interpolate nans by flood fill algorithm
         self.res = np.nan_to_num(self.res).astype(int)
         o = np.argwhere(self.res == 0)
         while len(o) != 0:
@@ -409,17 +495,21 @@ class Bifurcation2D:
             floodfill(self.res, pos[0], pos[1], fillval)
             o = np.argwhere(self.res == 0)
 
-        # Save final results
-        np.savetxt(self.direc + '/Results.txt', self.res, fmt='%i')
-        np.savetxt(self.direc + '/p1_vals.txt', np.linspace(self.p1_range[0], self.p1_range[1], self.n_sims))
-        np.savetxt(self.direc + '/p2_vals.txt', np.linspace(self.p2_range[0], self.p2_range[1], self.n_sims))
+        # Save figure
+        fig, ax = self.im_fig()
+        fig.set_size_inches(4, 4)
+        fig.tight_layout()
+        plt.savefig(self.direc + '/im_fig.png', dpi=300)
+        plt.close()
 
-        # Figures
-        self.im_fig()
+        # Save full results
+        # not strictly necessary - can be obtained from other saved files, but avoids having to rerun algorithm
+        np.savetxt(self.direc + '/Res.txt', self.res, fmt='%i')
 
     def im_fig(self):
         """
-        Phase space plot (shows nearest-neighbour interpolated values for parameter sets that haven't been evaluated)
+        Parameter space plot (shows nearest-neighbour interpolated values for parameter combinations that haven't been
+        evaluated)
 
         """
 
@@ -448,24 +538,21 @@ class Bifurcation2D:
             ypoints = self.p2_range[0] + ypoints * (self.p2_range[1] - self.p2_range[0]) / self.n_sims
             ax.scatter(xpoints, ypoints, s=0.1, c='k')
 
-        # Save figure
+        # Figure adjustments
         ax.set_xlim(self.p1_range[0], self.p1_range[1])
         ax.set_ylim(self.p2_range[0], self.p2_range[1])
-        fig.set_size_inches(4, 4)
-        fig.tight_layout()
-        fig.savefig(self.direc + '/im_fig.png', dpi=300)
-
-        # Close
-        plt.close()
+        return fig, ax
 
 
 def floodfill(array, x, y, newval):
     """
+    Queue based flood fill algorithm
+    Edits array in place
 
     :param array:
-    :param x:
-    :param y:
-    :param newval:
+    :param x: x position
+    :param y: y position
+    :param newval: new value
     :return:
     """
     oldval = array[x, y]
@@ -496,11 +583,14 @@ def floodfill(array, x, y, newval):
 
 def findzone(array, x, y):
     """
+    For 2D phase space class.
+    Finds zone corresponding to a given location
+    Based on flood fill algorithm
 
     :param array:
-    :param x:
-    :param y:
-    :return:
+    :param x: x position
+    :param y: y position
+    :return: zone value
     """
 
     tested = np.zeros(array.shape)
@@ -543,51 +633,34 @@ Misc
 """
 
 
-# def direcslist(dest, levels=0):
-#     """
-#
-#     Gives a list of directories in a given directory (full path)
-#     Excludes directories that contain !
-#
-#     :param dest:
-#     :return:
-#     """
-#     lis = glob.glob('%s/*/' % dest)
-#     for level in range(levels):
-#         newlis = []
-#         for e in lis:
-#             newlis.extend(glob.glob('%s/*/' % e))
-#         lis = newlis
-#     lis = [x[:-1] for x in lis if '!' not in x]
-#     return lis
-#
-#
-# def animate(self, direc):
-#     """
-#     direc: directory to results
-#
-#     """
-#
-#     times = np.loadtxt(direc + '/times.txt')
-#     A = np.loadtxt(direc + '/A.txt')
-#     P = np.loadtxt(direc + '/P.txt')
-#
-#     fig = plt.figure()
-#     ax = fig.add_subplot(111)
-#     plt.subplots_adjust(bottom=0.25, wspace=0.5)
-#     axframe = plt.axes([0.25, 0.1, 0.65, 0.03])
-#     sframe = Slider(axframe, 'Time (s)', 0, times[-1], valinit=0, valfmt='%d')
-#
-#     def update(i):
-#         ax.clear()
-#         tpoint = np.argmin(abs(times - int(i)))
-#         a = A[tpoint, :]
-#         p = P[tpoint, :]
-#         ax.plot(np.linspace(0, self.L, self.xsteps), a, c='tab:red')
-#         ax.plot(np.linspace(0, self.L, self.xsteps), p, c='tab:blue')
-#         ax.set_ylim(bottom=0)
-#         ax.set_ylabel('Cortical concentration (a.u.)')
-#         ax.set_xlabel('Position (μm)')
-#
-#     sframe.on_changed(update)
-#     plt.show()
+def animatePAR(direc):
+    """
+    Display an animation for PAR model
+
+    direc: directory to results
+
+    """
+
+    times = np.loadtxt(direc + '/times.txt')
+    A = np.loadtxt(direc + '/A.txt')
+    P = np.loadtxt(direc + '/P.txt')
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    plt.subplots_adjust(bottom=0.25, wspace=0.5)
+    axframe = plt.axes([0.25, 0.1, 0.65, 0.03])
+    sframe = Slider(axframe, 'Time (s)', 0, times[-1], valinit=0, valfmt='%d')
+
+    def update(i):
+        ax.clear()
+        tpoint = np.argmin(abs(times - int(i)))
+        a = A[tpoint, :]
+        p = P[tpoint, :]
+        ax.plot(a, c='tab:red')
+        ax.plot(p, c='tab:blue')
+        ax.set_ylim(bottom=0)
+        ax.set_ylabel('Cortical concentration (a.u.)')
+        ax.set_xlabel('Position (μm)')
+
+    sframe.on_changed(update)
+    plt.show()

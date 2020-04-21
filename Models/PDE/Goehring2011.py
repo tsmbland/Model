@@ -55,11 +55,10 @@ class Goehring2011:
         self.kPA = 0
 
         # Initial equilibration (no antagonism)
-        Tmax = self.Tmax / 10
-        soln, times = pdeRK(dxdt=self.dxdt, X0=[self.A, self.P], Tmax=Tmax, deltat=self.deltat,
-                            t_eval=np.arange(0, Tmax + 0.0001, Tmax))
-        self.A = soln[0][-1, :]
-        self.P = soln[1][-1, :]
+        soln, time, solns, times = pdeRK(dxdt=self.dxdt, X0=[self.A, self.P], Tmax=self.Tmax, deltat=self.deltat,
+                                         t_eval=np.arange(0, self.Tmax + 0.0001, self.Tmax), stabilitycheck=True)
+        self.A = soln[0]
+        self.P = soln[1]
 
         # Polarise
         self.A *= 2 * np.r_[np.ones([self.xsteps // 2]), np.zeros([self.xsteps // 2])]
@@ -69,20 +68,39 @@ class Goehring2011:
         self.kAP = kAP
         self.kPA = kPA
 
-    def run(self, save_direc=None, save_gap=None):
+    def run(self, save_direc=None, save_gap=None, kill_uni=False, kill_stab=False):
+        """
+
+        :param save_direc: if given, will save A and P distributions over time according to save_gap
+        :param save_gap: gap in model time between save points
+        :param kill_uni: terminate once polarity is lost. Generally can assume models never regain polarity once lost
+        :param kill_stab: terminate when patterns are stable. I'd advise against for phase-space diagrams, can get
+            fuzzy boundaries
+        :return:
+        """
         if save_gap is None:
             save_gap = self.Tmax
 
+        # Kill when uniform
+        if kill_uni:
+            def killfunc(X):
+                if sum(X[0] > X[1]) == len(X[0]) or sum(X[0] > X[1]) == 0:
+                    return True
+                return False
+        else:
+            killfunc = None
+
         # Run
-        soln, times = pdeRK(dxdt=self.dxdt, X0=[self.A, self.P], Tmax=self.Tmax, deltat=self.deltat,
-                            t_eval=np.arange(0, self.Tmax + 0.0001, save_gap))
-        self.A = soln[0][-1, :]
-        self.P = soln[1][-1, :]
+        soln, time, solns, times = pdeRK(dxdt=self.dxdt, X0=[self.A, self.P], Tmax=self.Tmax, deltat=self.deltat,
+                                         t_eval=np.arange(0, self.Tmax + 0.0001, save_gap), killfunc=killfunc,
+                                         stabilitycheck=kill_stab)
+        self.A = soln[0]
+        self.P = soln[1]
 
         # Save
         if save_direc is not None:
-            np.savetxt(save_direc + '/A.txt', soln[0])
-            np.savetxt(save_direc + '/P.txt', soln[1])
+            np.savetxt(save_direc + '/A.txt', solns[0])
+            np.savetxt(save_direc + '/P.txt', solns[1])
             np.savetxt(save_direc + '/times.txt', times)
 
     def polarised(self):
