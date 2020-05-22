@@ -1,7 +1,5 @@
 import numpy as np
 from scipy.integrate import odeint
-from Funcs import ParamSpaceQual2D
-import matplotlib.pyplot as plt
 
 """
 PARAMETER SETS
@@ -111,22 +109,3 @@ class GOR:
             else:
                 # Both unstable
                 return 6
-
-
-###############################################################################
-
-
-# import time
-#
-# t = time.time()
-#
-#
-# def evaluate1(p0, a1):
-#     return GOR(a1=a1, a2=0.0033, a3=0.01, p0=p0).bistability_instability()
-#
-#
-# a = Bifurcation2D(evaluate1, p1_range=(0, 10), p2_range=(0, 0.01), log=False, cores=4, resolution0=50,
-#                   resolution_step=2, n_iterations=5, direc='_test2', parallel=False, crange=[1, 6])
-# a.run()
-#
-# print(time.time() - t)

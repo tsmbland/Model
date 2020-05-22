@@ -1,7 +1,5 @@
 import numpy as np
 from scipy.integrate import odeint
-from Funcs import ParamSpaceQual2D
-import matplotlib.pyplot as plt
 
 """
 PARAMETER SETS
@@ -124,7 +122,6 @@ class WP:
             else:
                 # Both unstable
                 return 6
-
 
 ###############################################################################
 
