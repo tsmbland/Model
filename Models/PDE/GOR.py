@@ -56,9 +56,3 @@ class GOR:
         if save_direc is not None:
             np.savetxt(save_direc + '/U.txt', solns[0])
             np.savetxt(save_direc + '/times.txt', times)
-
-    def polarised(self):
-        if max(self.U) / min(self.U) - 1 < 0.05:
-            return 1
-        else:
-            return 2

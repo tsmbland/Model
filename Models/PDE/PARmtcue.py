@@ -6,7 +6,7 @@ from scipy.integrate import odeint
 
 class PAR:
     def __init__(self, Da, Dp, konA, koffA, kposA, konP, koffP, kposP, kPA, kAP, eAneg, ePneg, xsteps, psi, Tmax,
-                 deltat, L, pA, pP):
+                 deltat, L, pA, pP, cue):
         # Species
         self.A = np.zeros([int(xsteps)])
         self.P = np.zeros([int(xsteps)])
@@ -19,6 +19,9 @@ class PAR:
         # Diffusion
         self.Da = Da  # input is um2 s-1
         self.Dp = Dp  # um2 s-1
+
+        # Cue
+        self.cue = cue
 
         # Membrane exchange
         self.konA = konA  # um s-1
@@ -45,14 +48,15 @@ class PAR:
         self.psi = psi  # um-1
 
     def dxdt(self, X):
+        cue = np.r_[np.zeros(3 * self.xsteps // 4), np.ones(self.xsteps // 4)]
         A = X[0]
         P = X[1]
         ac = self.pA - self.psi * np.mean(A)
         pc = self.pP - self.psi * np.mean(P)
-        dA = ((self.konA * ac) - (self.koffA * A) - (self.kAP * (P ** self.ePneg) * A) + (self.kposA * A * ac) + (
-            self.Da * diffusion(A, self.deltax)))
-        dP = ((self.konP * pc) - (self.koffP * P) - (self.kPA * (A ** self.eAneg) * P) + (self.kposP * P * pc) + (
-            self.Dp * diffusion(P, self.deltax)))
+        dA = (self.konA * ac) - (self.koffA * A) - (self.kAP * (P ** self.ePneg) * A) + (self.kposA * A * ac) + (
+            self.Da * diffusion(A, self.deltax))
+        dP = (self.konP * pc) - (self.koffP * P) - (self.kPA * (A ** self.eAneg) * P) * (1 - self.cue * cue) + (
+            self.kposP * P * pc) + (self.Dp * diffusion(P, self.deltax))
         return [dA, dP]
 
     def initiate(self):
@@ -135,25 +139,91 @@ class PAR:
             np.savetxt(save_direc + '/P.txt', solns[1])
             np.savetxt(save_direc + '/times.txt', times)
 
-# import matplotlib.pyplot as plt
-# from Funcs import animatePAR
+
+import matplotlib.pyplot as plt
+
+# BaseModel = PAR(Da=0.28, Dp=0.15, konA=0.00858, koffA=0.0054, konP=0.0474, koffP=0.0073, kAP=0.19, kPA=2, eAneg=2,
+#                 ePneg=1, xsteps=100, psi=0.174, Tmax=1000, deltat=0.01, L=67.3, pA=1.56, pP=0, kposA=0, kposP=0,
+#                 v=1)
+
+# BaseModel = PAR(Da=0.1, Dp=0.1, konA=0.1, koffA=0.01, kposA=0.1, konP=0.1, koffP=0.0101, kposP=0, kAP=0.01, kPA=0.01,
+#                 ePneg=2, eAneg=2, xsteps=100, Tmax=1000, deltat=0.01, L=50, psi=0.1, pA=1, pP=1, cue=0.5)
 #
-# kon0 = -1.75
-# x = 0.85
+# BaseModel.initiate3(0)
 #
-# m = PAR(Da=0.1, Dp=0.1, konA=0.1, koffA=0.01, kposA=0, konP=0.1, koffP=0.0101, kposP=0, kAP=0.5, kPA=0.5,
-#         ePneg=1, eAneg=1, xsteps=100, Tmax=10000, deltat=0.01, L=50, psi=0.1, pA=1, pP=1)
+# plt.plot(BaseModel.A)
+# plt.plot(BaseModel.P)
+# plt.show()
 #
-# kon0 = 10 ** kon0
-# m.konP = kon0 * (1 - x)
-# m.konA = kon0 * (1 - x)
-# m.kposP = x * (m.psi * kon0 + m.koffP) / 1
-# m.kposA = x * (m.psi * kon0 + m.koffA) / 1
+# BaseModel.run()
 #
-# m.initiate()
-# m.run(save_direc='_test', save_gap=10)
-# animatePAR('_test')
+# plt.plot(BaseModel.A)
+# plt.plot(BaseModel.P)
+# plt.show()
 #
-# # plt.plot(m.A)
-# # plt.plot(m.P)
-# # plt.show()
+# BaseModel.cue = 0
+# BaseModel.run()
+#
+# plt.plot(BaseModel.A)
+# plt.plot(BaseModel.P)
+# plt.show()
+
+# BaseModel.run()
+#
+# plt.plot(BaseModel.A)
+# plt.plot(BaseModel.P)
+# plt.show()
+
+# from Funcs import ParamSpaceQual2D
+# import copy
+# import States as s
+#
+# kon0 = 0.1
+#
+#
+# def asi(concs):
+#     ant = np.mean(concs[:50])
+#     post = np.mean(concs[50:])
+#     asi = abs((ant - post) / (2 * (ant + post)))
+#     return asi
+#
+#
+# def func(v, x):
+#     m = copy.deepcopy(BaseModel)
+#     m.v = v
+#     m.konP = kon0 * (1 - x)
+#     m.konA = kon0 * (1 - x)
+#     m.kposP = x * (m.psi * kon0 + m.koffP) / 1
+#     m.kposA = x * (m.psi * kon0 + m.koffA) / 1
+#     # m.initiate()
+#     m.run()
+#     return s.par_state_asi_a2(m.A, m.P)
+#
+#
+# p = ParamSpaceQual2D(func, p1_range=[0, 1], p2_range=[0, 1], cores=4, resolution0=10, resolution_step=2,
+#                      n_iterations=1, direc='_test', parallel=True, crange=[1, 6])
+# p.run()
+# p.im_fig()
+# plt.show()
+
+# import copy
+#
+# M = PAR(Da=0.1, Dp=0.1, konA=0, koffA=0.01, kposA=0, konP=0, koffP=0.0101, kposP=0, kAP=0, kPA=0.1,
+#         ePneg=2, eAneg=2, xsteps=100, Tmax=1000, deltat=0.01, L=50, psi=0.1, pA=1, pP=1, cue=0.5)
+#
+# e_vals = [0, 0.6, 0.9]
+# cs = ['0.8', '0.4', '0']
+# kon0 = 0.1
+#
+# for i, x in enumerate(e_vals):
+#     m = copy.deepcopy(M)
+#     m.konP = kon0 * (1 - x)
+#     m.konA = kon0 * (1 - x)
+#     m.kposP = x * (m.psi * kon0 + m.koffP) / 1
+#     m.kposA = x * (m.psi * kon0 + m.koffA) / 1
+#
+#     m.initiate3(0)
+#     m.run()
+#     plt.plot(np.linspace(0, 50, 100), m.P, c=cs[i], label=str(x))
+#
+# plt.show()

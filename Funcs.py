@@ -1,13 +1,8 @@
-import matplotlib as mpl
-
-mpl.use('Agg')
-
 import numpy as np
 import os
 import multiprocessing
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider
-import itertools
 
 """
 Evaluate functions
@@ -247,60 +242,59 @@ Parameter space
 """
 
 
-class ParamSpaceQuant2D:
-    def __init__(self, func, p1_vals, p2_vals, direc, parallel=False, cores=None):
+class ParamSpace1D:
+    def __init__(self, func, p_vals, direc, parallel=False, cores=None):
         """
         Runs func with all combinations of p1_vals and p2_vals, saves results to csv file
 
         :param func: function, takes two parameter values, returns a float
-        :param p1_vals: array of parameter 1 values
-        :param p2_vals: array of parameter 1 values
+        :param p_vals: array of parameter values
         :param direc: directory to save results
         :param parallel: if True, will run in parallel using number of cores specified
         :param cores: number of cores to use, if parallel=True
 
         To do:
         - check that this works
-        - save results as txt file array
-        - ability to plot results from with the class
+        - ability to stop and resume
+        - make more like 2D class, i.e. ability to explore boundaries
 
         """
         self.func = func
-        self.p1_vals = p1_vals
-        self.p2_vals = p2_vals
+        self.p_vals = p_vals
         self.cores = cores
         self.direc = direc
         self.parallel = parallel
 
-    def single_eval(self, p1val, p2val):
+    def single_eval(self, p_val):
 
         # Run function
-        res = self.func(p1val, p2val)
+        res = self.func(p_val)
 
         # Save results
         with open(self.direc + '/Res.csv', 'a') as f:
-            f.write("{:.12f}".format(p1val) + ',' + "{:.12f}".format(p2val) + ',' + str(res) + '\n')
+            f.write("{:.12f}".format(p_val) + ',' + str(res) + '\n')
 
     def run(self):
 
-        # Parameter combinations
-        sims_array = np.array(list(itertools.product(self.p1_vals, self.p2_vals)))
+        # Make results directory, if it doesn't already exist
+        if not os.path.isdir(self.direc):
+            os.mkdir(self.direc)
 
         # Run
         if self.parallel:
             pool = multiprocessing.Pool(self.cores)
-            pool.starmap(self.single_eval, iter(sims_array))
+            pool.map(self.single_eval, self.p_vals)
         else:
-            for k in iter(sims_array):
-                self.single_eval(*k)
+            for p in iter(self.p_vals):
+                self.single_eval(p)
 
 
-class ParamSpaceQual2D:
+class ParamSpace2D:
     def __init__(self, func, p1_range, p2_range, resolution0, direc, resolution_step=2, n_iterations=1,
-                 parallel=False, cores=None, colours=None, crange=None, cmap=None, show_boundaries=False):
+                 explore_boundaries=True, parallel=False, cores=None, crange=None, cmap=None, save_fig=True):
         """
 
-        Functions to create qualitative phase space diagrams
+        Class to perform parameter space sweeps
 
         Run by calling run function
         - performs analysis, saves results with each iteration to .csv files, and saves final figure
@@ -313,6 +307,7 @@ class ParamSpaceQual2D:
         :param resolution0: n x n points on initial grid
         :param resolution_step: how much resolution increases with each iteration
         :param n_iterations: number of iterations
+        :param explore_boundaries: if True, will focus parameter search to regions where func result varies
         :param parallel: if True, will run in parallel using number of cores specified
         :param cores: number of cores on machine to use in parallel
 
@@ -320,14 +315,13 @@ class ParamSpaceQual2D:
         :param direc: directory to save results. Directory must already exist
 
         # Figure parameters
-        :param colours: dictionary of function outputs (integers) to colour names. Or can use crange/cmap
+        :param save_fig: if True, will save figure
         :param crange: (lowest value, highest value)
         :param cmap: if None, pyplot will use 'viridis'
-        :param show_boundaries: if True, will highlight region boundaries in black
 
         To do:
-        - currently breaks if no boundaries are found
-        - ability to start from higher iteration by importing
+        - adjust so it can be run from multiple machines simultaneously
+        - test
 
         """
 
@@ -338,17 +332,21 @@ class ParamSpaceQual2D:
         self.resolution0 = resolution0
         self.resolution_step = resolution_step
         self.n_iterations = n_iterations
+        self.explore_boundaries = explore_boundaries
         self.parallel = parallel
-        self.cores = cores
+
+        if cores is None:
+            self.cores = multiprocessing.cpu_count()
+        else:
+            self.cores = cores
 
         # Saving
         self.direc = direc
+        self.save_fig = save_fig
 
         # Figure
-        self.colours = colours
         self.crange = crange
         self.cmap = cmap
-        self.show_boundaries = show_boundaries
 
         # Results
         self.iteration = None
@@ -357,7 +355,7 @@ class ParamSpaceQual2D:
 
     def single_eval(self, p1val_p2val):
         """
-        Single funciton call for given p1 and p2 values, save result
+        Single function call for given p1 and p2 values, save result
 
         """
 
@@ -392,13 +390,20 @@ class ParamSpaceQual2D:
                 p1, p2, val = line[:-1].split(',')
                 xind = ((float(p1) - self.p1_range[0]) * (self.n_sims - 1)) / (self.p1_range[1] - self.p1_range[0])
                 yind = ((float(p2) - self.p2_range[0]) * (self.n_sims - 1)) / (self.p2_range[1] - self.p2_range[0])
-                self.res[round(xind), round(yind)] = int(val)
+                if '.' in val:
+                    self.res[round(xind), round(yind)] = float(val)
+                else:
+                    self.res[round(xind), round(yind)] = int(val)
 
     def run(self):
         """
         Run algorithm, save figure
 
         """
+
+        # Make results directory, if it doesn't already exist
+        if not os.path.isdir(self.direc):
+            os.mkdir(self.direc)
 
         for iteration in range(self.n_iterations):
             print(iteration)
@@ -413,16 +418,20 @@ class ParamSpaceQual2D:
             else:
                 self.n_sims = self.resolution_step * (self.n_sims - 1) + 1
 
-                # Find boundary regions
-                a = np.nonzero(np.nan_to_num(np.diff(self.res, axis=0)))
-                b = np.nonzero(np.nan_to_num(np.diff(self.res, axis=1)))
-                c = np.nonzero(np.nan_to_num(self.res[:-1, :-1] - self.res[1:, 1:]))
-                xpoints = np.r_[a[0], b[0], c[0]]
-                ypoints = np.r_[a[1], b[1], c[1]]
-                run_bool = np.zeros([self.n_sims, self.n_sims])
-                for x, y in zip(xpoints, ypoints):
-                    run_bool[x * self.resolution_step:x * self.resolution_step + (self.resolution_step + 1),
-                    y * self.resolution_step:y * self.resolution_step + (self.resolution_step + 1)] = 1
+                if self.explore_boundaries:
+                    # Find boundary regions
+                    a = np.nonzero(np.nan_to_num(np.diff(self.res, axis=0)))
+                    b = np.nonzero(np.nan_to_num(np.diff(self.res, axis=1)))
+                    c = np.nonzero(np.nan_to_num(self.res[:-1, :-1] - self.res[1:, 1:]))
+                    xpoints = np.r_[a[0], b[0], c[0]]
+                    ypoints = np.r_[a[1], b[1], c[1]]
+                    run_bool = np.zeros([self.n_sims, self.n_sims])
+                    for x, y in zip(xpoints, ypoints):
+                        run_bool[x * self.resolution_step:x * self.resolution_step + (self.resolution_step + 1),
+                        y * self.resolution_step:y * self.resolution_step + (self.resolution_step + 1)] = 1
+
+                else:
+                    run_bool = np.ones([self.n_sims, self.n_sims])
 
             # Parameter combinations
             sims_array_ind = np.nonzero(run_bool)
@@ -434,16 +443,18 @@ class ParamSpaceQual2D:
             if os.path.isfile(self.direc + '/' + str(self.iteration) + '.csv'):
                 with open(self.direc + '/' + str(self.iteration) + '.csv') as f:
                     for line in f:
-                        if line[:-3] in pcombs:
-                            pcombs.remove(line[:-3])
+                        p = line.split(',')[0] + ',' + line.split(',')[1]
+                        if p in pcombs:
+                            pcombs.remove(p)
 
             # Carry over combinations from previous iteration
             if self.iteration != 0:
                 with open(self.direc + '/' + str(self.iteration - 1) + '.csv') as f:
                     with open(self.direc + '/' + str(self.iteration) + '.csv', 'a') as g:
                         for line in f:
-                            if line[:-3] in pcombs:
-                                pcombs.remove(line[:-3])
+                            p = line.split(',')[0] + ',' + line.split(',')[1]
+                            if p in pcombs:
+                                pcombs.remove(p)
                                 g.write(line)
 
             # Run
@@ -455,19 +466,22 @@ class ParamSpaceQual2D:
 
             # Safety check: test any untested points directly adjacent to boundaries
             # (often required if resolution0 or resolution_step are too small)
-            if self.iteration != 0:
+            if self.explore_boundaries and self.iteration != 0:
                 j = 1
                 while j != 0:
 
                     # Compare each nan value to all neighbours
                     # (this is quite slow, quicker way?)
                     # throws warning: "All-NaN axis encountered" - this is fine
-                    x = np.dstack((self.res[:-2, :-2], self.res[:-2, 1:-1], self.res[:-2, 2:], self.res[1:-1, :-2],
-                                   self.res[1:-1, 2:], self.res[2:, :-2], self.res[2:, 1:-1], self.res[2:, 2:]))
+                    res_padded = np.nan * np.zeros([self.n_sims + 2, self.n_sims + 2])
+                    res_padded[1:-1, 1:-1] = self.res
+                    x = np.dstack(
+                        (res_padded[:-2, :-2], res_padded[:-2, 1:-1], res_padded[:-2, 2:], res_padded[1:-1, :-2],
+                         res_padded[1:-1, 2:], res_padded[2:, :-2], res_padded[2:, 1:-1], res_padded[2:, 2:]))
+
                     mx = np.nanmax(x, axis=2)
                     mn = np.nanmin(x, axis=2)
-                    run_bool = np.zeros([self.n_sims, self.n_sims])
-                    run_bool[1:-1, 1:-1] = (mx == mx) * (mx != mn) * (self.res[1:-1, 1:-1] != self.res[1:-1, 1:-1])
+                    run_bool = (mx == mx) * (mx != mn) * (self.res != self.res)
                     sims_array_ind = np.nonzero(run_bool)
                     j = len(sims_array_ind[0])
 
@@ -486,30 +500,45 @@ class ParamSpaceQual2D:
                         # Compile results
                         self.import_res()
 
-        # Interpolate nans by flood fill algorithm
-        self.res = np.nan_to_num(self.res).astype(int)
-        o = np.argwhere(self.res == 0)
-        while len(o) != 0:
-            pos = o[0]
-            fillval = findzone(self.res, pos[0], pos[1])
-            floodfill(self.res, pos[0], pos[1], fillval)
-            o = np.argwhere(self.res == 0)
+        # Interpolate missing values
+        if self.explore_boundaries:
+
+            # If no boundary (i.e. uniform parameter space), reload output from first iteration
+            if np.sum(~np.isnan(self.res)) == 0:
+                with open(self.direc + '/0.csv') as f:
+                    self.res[:, :] = int(f.readline().split(',')[2])
+
+            # Interpolate nans by flood fill algorithm
+            else:
+                o = np.argwhere(self.res != self.res)
+                while len(o) != 0:
+                    pos = o[0]
+                    fillval = findzone(self.res, pos[0], pos[1])
+                    floodfill(self.res, pos[0], pos[1], fillval)
+                    o = np.argwhere(self.res != self.res)
 
         # Save figure
-        fig, ax = self.im_fig()
-        fig.set_size_inches(4, 4)
-        fig.tight_layout()
-        plt.savefig(self.direc + '/im_fig.png', dpi=300)
-        plt.close()
+        if self.save_fig:
+            fig, ax = self.fig()
+            fig.set_size_inches(4, 4)
+            fig.tight_layout()
+            plt.savefig(self.direc + '/fig.png', dpi=300)
+            plt.close()
 
-        # Save full results
-        # not strictly necessary - can be obtained from other saved files, but avoids having to rerun algorithm
-        np.savetxt(self.direc + '/Res.txt', self.res, fmt='%i')
+        # Specify int/float format
+        f = (self.res % 1) == 0
 
-    def im_fig(self):
+        # Save row by row
+        with open(self.direc + '/Res.txt', 'w') as fh:
+            for i, row in enumerate(self.res):
+                formats = f[i]
+                line = ' '.join(
+                    "{:.0f}".format(value) if formats[j] else "{:.12f}".format(value) for j, value in enumerate(row))
+                fh.write(line + '\n')
+
+    def fig(self):
         """
-        Parameter space plot (shows nearest-neighbour interpolated values for parameter combinations that haven't been
-        evaluated)
+        Parameter space plot
 
         """
 
@@ -518,25 +547,8 @@ class ParamSpaceQual2D:
         fig, ax = plt.subplots()
 
         # Colours
-        if self.colours is not None:
-            cmap = mpl.colors.ListedColormap(list(self.colours.values()))
-            norm = mpl.colors.BoundaryNorm(list(self.colours.keys()) + [100], cmap.N)
-            ax.imshow(self.res.T, origin='lower', aspect='auto', cmap=cmap, norm=norm,
-                      extent=(self.p1_range[0], self.p1_range[1], self.p2_range[0], self.p2_range[1]))
-        else:
-            ax.imshow(self.res.T, origin='lower', aspect='auto', vmin=self.crange[0], vmax=self.crange[1],
-                      extent=(self.p1_range[0], self.p1_range[1], self.p2_range[0], self.p2_range[1]))
-
-        # Boundaries
-        if self.show_boundaries:
-            a = np.nonzero(np.diff(self.res, axis=0))
-            b = np.nonzero(np.diff(self.res, axis=1))
-            c = np.nonzero(self.res[:-1, :-1] - self.res[1:, 1:])
-            xpoints = np.r_[a[0], b[0], c[0]] + 1
-            ypoints = np.r_[a[1], b[1], c[1]] + 1
-            xpoints = self.p1_range[0] + xpoints * (self.p1_range[1] - self.p1_range[0]) / self.n_sims
-            ypoints = self.p2_range[0] + ypoints * (self.p2_range[1] - self.p2_range[0]) / self.n_sims
-            ax.scatter(xpoints, ypoints, s=0.1, c='k')
+        ax.imshow(self.res.T, origin='lower', aspect='auto', vmin=self.crange[0], vmax=self.crange[1],
+                  cmap=self.cmap, extent=(self.p1_range[0], self.p1_range[1], self.p2_range[0], self.p2_range[1]))
 
         # Figure adjustments
         ax.set_xlim(self.p1_range[0], self.p1_range[1])
@@ -555,28 +567,26 @@ def floodfill(array, x, y, newval):
     :param newval: new value
     :return:
     """
-    oldval = array[x, y]
-    if oldval == newval:
-        return
+
     array[x, y] = newval
     Q = [(x, y)]
     while len(Q) != 0:
         x, y = Q.pop(0)
 
         if x > 0:
-            if array[x - 1, y] == oldval:
+            if np.isnan(array[x - 1, y]):
                 array[x - 1, y] = newval
                 Q.append((x - 1, y))
         if x < len(array[:, 0]) - 1:
-            if array[x + 1, y] == oldval:
+            if np.isnan(array[x + 1, y]):
                 array[x + 1, y] = newval
                 Q.append((x + 1, y))
         if y > 0:
-            if array[x, y - 1] == oldval:
+            if np.isnan(array[x, y - 1]):
                 array[x, y - 1] = newval
                 Q.append((x, y - 1))
         if y < len(array[0, :]) - 1:
-            if array[x, y + 1] == oldval:
+            if np.isnan(array[x, y + 1]):
                 array[x, y + 1] = newval
                 Q.append((x, y + 1))
 
@@ -596,8 +606,8 @@ def findzone(array, x, y):
     tested = np.zeros(array.shape)
     tested[x, y] = 1
     Q = [(x, y)]
-    val = 0
-    while val == 0:
+    val = np.nan
+    while val != val:
         x, y = Q.pop(0)
 
         vals = []

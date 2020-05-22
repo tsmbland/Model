@@ -57,8 +57,3 @@ class OT:
             np.savetxt(save_direc + '/U.txt', solns[0])
             np.savetxt(save_direc + '/times.txt', times)
 
-    def polarised(self):
-        if max(self.U) / min(self.U) - 1 < 0.05:
-            return 1
-        else:
-            return 2

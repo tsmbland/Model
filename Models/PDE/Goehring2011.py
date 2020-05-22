@@ -102,11 +102,3 @@ class Goehring2011:
             np.savetxt(save_direc + '/A.txt', solns[0])
             np.savetxt(save_direc + '/P.txt', solns[1])
             np.savetxt(save_direc + '/times.txt', times)
-
-    def polarised(self):
-        if sum(self.A > self.P) == len(self.A):
-            return 3
-        elif sum(self.A > self.P) == 0:
-            return 1
-        else:
-            return 2

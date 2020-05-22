@@ -5,8 +5,8 @@ from scipy.integrate import odeint
 
 
 class PAR:
-    def __init__(self, Da, Dp, konA, koffA, kposA, konP, koffP, kposP, kPA, kAP, eAneg, ePneg, xsteps, psi, Tmax,
-                 deltat, L, pA, pP):
+    def __init__(self, Da, Dp, konA, koffA, kposA, khillA, konP, koffP, kposP, khillP, kPA, kAP, eAneg, ePneg, xsteps,
+                 psi, Tmax, deltat, L, pA, pP):
         # Species
         self.A = np.zeros([int(xsteps)])
         self.P = np.zeros([int(xsteps)])
@@ -29,6 +29,8 @@ class PAR:
         # Positive feedback
         self.kposA = kposA
         self.kposP = kposP
+        self.khillA = khillA
+        self.khillP = khillP
 
         # Antagonism
         self.kPA = kPA  # um4 s-1
@@ -49,10 +51,10 @@ class PAR:
         P = X[1]
         ac = self.pA - self.psi * np.mean(A)
         pc = self.pP - self.psi * np.mean(P)
-        dA = ((self.konA * ac) - (self.koffA * A) - (self.kAP * (P ** self.ePneg) * A) + (self.kposA * A * ac) + (
-            self.Da * diffusion(A, self.deltax)))
-        dP = ((self.konP * pc) - (self.koffP * P) - (self.kPA * (A ** self.eAneg) * P) + (self.kposP * P * pc) + (
-            self.Dp * diffusion(P, self.deltax)))
+        dA = ((self.konA * ac) - (self.koffA * A) - (self.kAP * (P ** self.ePneg) * A) + (
+            self.kposA * ac * A / (self.khillA + A)) + (self.Da * diffusion(A, self.deltax)))
+        dP = ((self.konP * pc) - (self.koffP * P) - (self.kPA * (A ** self.eAneg) * P) + (
+            self.kposP * pc * P / (self.khillP + P)) + (self.Dp * diffusion(P, self.deltax)))
         return [dA, dP]
 
     def initiate(self):

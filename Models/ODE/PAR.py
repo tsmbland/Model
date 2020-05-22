@@ -2,16 +2,6 @@ import numpy as np
 from scipy.integrate import odeint
 
 
-# import os
-# import sys
-#
-# home_direc = os.path.dirname(os.path.realpath(__file__))
-# sys.path.append(home_direc)
-# sys.path.append(home_direc + '/../..')
-#
-# # from Funcs import Bifurcation2D
-
-
 ###############################################################################
 
 
@@ -160,6 +150,21 @@ pA      = 1.56
 pP      = 1
 
 
+GROSS 2018
+
+konA    = 0.02115
+koffA   = 0.0092
+konP    = 0.13012
+koffP   = 0.0073
+ePneg   = -
+eAneg   = -
+kAP     = -
+kPA     = -
+psi     = -
+pA      = -
+pP      = -
+
+
 HUBATSCH 2019 
 
 konA    = 0.006
@@ -173,6 +178,7 @@ kPA     = 1
 psi     = variable
 pA      = ?
 pP      = ?
+
 
 
 """
