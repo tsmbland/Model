@@ -5,7 +5,7 @@ home_direc = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(home_direc + '/../..')
 
 import numpy as np
-from Funcs import pdeRK, diffusion
+from ModelFuncs import pdeRK, diffusion
 from Models.ODE.PAR import PAR as ODE
 from scipy.integrate import odeint
 

@@ -11,7 +11,8 @@ from scipy.integrate import odeint
 
 
 class Goehring2011:
-    def __init__(self, Da, Dp, konA, koffA, konP, koffP, kPA, kAP, alpha, beta, xsteps, psi, Tmax, deltat, L, pA, pP):
+    def __init__(self, Da, Dp, konA, koffA, konP, koffP, kPA, kAP, alpha, beta, xsteps, psi, Tmax, deltat, L, pA, pP,
+                 v):
         # Species
         self.A = np.zeros([int(xsteps)])
         self.P = np.zeros([int(xsteps)])
@@ -24,6 +25,9 @@ class Goehring2011:
         # Diffusion
         self.Da = Da  # input is um2 s-1
         self.Dp = Dp  # um2 s-1
+
+        # Flow
+        self.v = v
 
         # Membrane exchange
         self.konA = konA  # um s-1
@@ -45,13 +49,21 @@ class Goehring2011:
         self.deltax = self.L / xsteps  # um
         self.psi = psi  # um-1
 
+    def flow(self, concs):
+        # v = np.arange(self.xsteps) / self.xsteps
+        x = np.array(range(self.xsteps)) * (100 / self.xsteps)
+        v = (x / np.exp(0.00075 * (x ** 2)))[::-1]
+        v /= max(v)
+        v[0] = 0
+        return - np.diff(np.r_[concs, concs[-1]] * np.r_[v, 0])
+
     def dxdt(self, X):
         A = X[0]
         P = X[1]
         ac = self.pA - self.psi * np.mean(A)
         pc = self.pP - self.psi * np.mean(P)
         dA = ((self.konA * ac) - (self.koffA * A) - (self.kAP * (P ** self.beta) * A) + (
-                self.Da * diffusion(A, self.deltax)))
+                self.Da * diffusion(A, self.deltax)) - (self.v / self.deltax) * self.flow(A))
         dP = ((self.konP * pc) - (self.koffP * P) - (self.kPA * (A ** self.alpha) * P) + (
                 self.Dp * diffusion(P, self.deltax)))
         return [dA, dP]

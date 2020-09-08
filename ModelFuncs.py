@@ -345,7 +345,10 @@ class ParamSpace2D:
         self.save_fig = save_fig
 
         # Figure
-        self.crange = crange
+        if crange is None:
+            self.crange = [None, None]
+        else:
+            self.crange = crange
         self.cmap = cmap
 
         # Results
@@ -488,9 +491,9 @@ class ParamSpace2D:
                     # Parameter combinations (if any)
                     if j != 0:
                         p1vals = self.p1_range[0] + sims_array_ind[0] * (self.p1_range[1] - self.p1_range[0]) / (
-                            self.n_sims - 1)
+                                self.n_sims - 1)
                         p2vals = self.p2_range[0] + sims_array_ind[1] * (self.p2_range[1] - self.p2_range[0]) / (
-                            self.n_sims - 1)
+                                self.n_sims - 1)
                         pcombs = ["{:.12f}".format(p1vals[i]) + ',' + "{:.12f}".format(p2vals[i]) for i in
                                   range(len(p1vals))]
 
@@ -508,7 +511,7 @@ class ParamSpace2D:
                 with open(self.direc + '/0.csv') as f:
                     self.res[:, :] = int(f.readline().split(',')[2])
 
-            # Interpolate nans by flood fill algorithm
+            # Else: Interpolate nans by flood fill algorithm
             else:
                 o = np.argwhere(self.res != self.res)
                 while len(o) != 0:
@@ -633,7 +636,7 @@ def findzone(array, x, y):
                 Q.append((x, y + 1))
 
         if len(vals) != 0:
-            val = max(vals)
+            val = np.nanmax(vals)
     return val
 
 
