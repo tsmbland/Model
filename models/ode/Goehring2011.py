@@ -1,3 +1,9 @@
+import sys
+import os
+
+home_direc = os.path.dirname(os.path.realpath(__file__))
+sys.path.append(home_direc + '/../..')
+
 import numpy as np
 from scipy.integrate import odeint
 
@@ -6,7 +12,8 @@ from scipy.integrate import odeint
 
 
 class Goehring2011:
-    def __init__(self, konA, koffA, konP, koffP, alpha, beta, psi, pA, pP, kAP, kPA):
+    def __init__(self, konA=0.00858, koffA=0.0054, konP=0.0474, koffP=0.0073, kPA=2, kAP=0.19,
+                 alpha=1, beta=2, psi=0.174, pA=1.56, pP=1):
         self.konA = konA
         self.koffA = koffA
         self.konP = konP
@@ -24,6 +31,6 @@ class Goehring2011:
         P = X[1]
         Acyt = self.pA - self.psi * A
         Pcyt = self.pP - self.psi * P
-        dA = (self.konA * Acyt) - (self.koffA * A) - (self.kAP * (P ** self.beta) * A)
-        dP = (self.konP * Pcyt) - (self.koffP * P) - (self.kPA * (A ** self.alpha) * P)
+        dA = (self.konA * Acyt) - (self.koffA * A) - (self.kAP * (P ** self.alpha) * A)
+        dP = (self.konP * Pcyt) - (self.koffP * P) - (self.kPA * (A ** self.beta) * P)
         return [dA, dP]

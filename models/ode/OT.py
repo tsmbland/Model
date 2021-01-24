@@ -1,3 +1,9 @@
+import sys
+import os
+
+home_direc = os.path.dirname(os.path.realpath(__file__))
+sys.path.append(home_direc + '/../..')
+
 import numpy as np
 from scipy.integrate import odeint
 
@@ -6,41 +12,42 @@ PARAMETER SETS
 
 JILKINE 2011
 
-a1   = ?
-a2   = ?
-a3   = 0.01733
-p0   = ?
+a1   = 25
+a2   = 0.7
+s    = 1
+p0   = 2
 
 
 HUBATSCH 2019
 
-a1   = 0.0067
-a2   = 0.0033
-a3   = 0.01
+a1   = 1
+a2   = 0.7
+s    = 1
 p0   = ?
+
 
 """
 
 
 ###############################################################################
 
-class GOR:
-    def __init__(self, a1, a2, a3, p0):
+class OT:
+    def __init__(self, a1, a2, s, p0):
         self.a1 = a1
         self.a2 = a2
-        self.a3 = a3
+        self.s = s
         self.p0 = p0
 
     def dUdt(self, X, t):
         U = X[0]
-        V = self.p0 - X[0]
-        dU = (self.a1 * (U ** 2) * V) + (self.a2 * U * V) - (self.a3 * U)
-        return [dU]
+        V = self.p0 - U
+        dUdt = self.a1 * (V - (U + V) / ((self.a2 * self.s * (U + V) + 1) ** 2))
+        return [dUdt]
 
     def dUdU(self, X, step=0.001):
         U = X[0]
-        V = self.p0 - X[0]
-        dUdU = (self.a1 * ((U + step) ** 2) * V) + (self.a2 * (U + step) * V) - (self.a3 * (U + step))
+        V = self.p0 - U
+        dUdU = self.a1 * (V - ((U + step) + V) / ((self.a2 * self.s * ((U + step) + V) + 1) ** 2))
         return dUdU / step
 
     def bistability(self):
@@ -109,3 +116,21 @@ class GOR:
             else:
                 # Both unstable
                 return 6
+
+###############################################################################
+
+
+# import time
+#
+# t = time.time()
+#
+#
+# def evaluate1(p0, a2):
+#     return OT(a1=1, a2=a2, s=1, p0=p0).bistability_instability()
+#
+#
+# a = Bifurcation2D(evaluate1, p1_range=(0, 5), p2_range=(0, 5), log=False, cores=4, resolution0=50,
+#                   resolution_step=2, n_iterations=5, direc='_test2', parallel=False, crange=[1, 6])
+# a.run()
+#
+# print(time.time() - t)

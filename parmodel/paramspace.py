@@ -2,242 +2,10 @@ import numpy as np
 import os
 import multiprocessing
 import matplotlib.pyplot as plt
-from matplotlib.widgets import Slider
+import shutil
 
 """
-Evaluate functions
-
-"""
-
-
-def evaluate(func, xrange, yrange, resolution0=1000, iterations=1, resolution_step=2, args=()):
-    """
-    Solve a function in the form 0 = f(x, y)
-
-    :param func: function to solve (0 = f(x,y,*args))
-    :param xrange: (lower x, upper x)
-    :param yrange: (lower y, upper y)
-    :param resolution0: resolution of grid space for first iteration
-    :param iterations: if > 1 will iteratively refine solution by increasing resolution by factor of resolution_step
-    :param resolution_step:
-    :param args: additional arguments for func
-    :return: two 1D arrays of points corresponding to x and y coordinates. NB these are UNORDERED, plot using
-        plt.scatter(xpoints,ypoints)
-
-
-    """
-
-    for iteration in range(iterations):
-
-        if iteration == 0:
-
-            # Set x and y values
-            n_sims = resolution0
-            xvals = np.linspace(xrange[0], xrange[1], n_sims)
-            yvals = np.linspace(yrange[0], yrange[1], n_sims)
-
-            # Evaluate
-            res = func(np.tile(xvals, (n_sims, 1)).T, np.tile(yvals, (n_sims, 1)), *args)
-            res_2d_sign = np.sign(res)
-
-        else:
-            # Find boundary regions
-            a = np.nonzero(np.nan_to_num(np.diff(res_2d_sign, axis=0)))
-            b = np.nonzero(np.nan_to_num(np.diff(res_2d_sign, axis=1)))
-            c = np.nonzero(np.nan_to_num(res_2d_sign[:-1, :-1] - res_2d_sign[1:, 1:]))
-            xpoints = np.r_[a[0], b[0], c[0]]
-            ypoints = np.r_[a[1], b[1], c[1]]
-
-            # Set x and y values
-            n_sims = resolution_step * (n_sims - 1) + 1
-
-            run_bool = np.zeros([n_sims, n_sims])
-            for x, y in zip(xpoints, ypoints):
-                run_bool[x * resolution_step:x * resolution_step + (resolution_step + 1),
-                y * resolution_step:y * resolution_step + (resolution_step + 1)] = 1
-            sims_array_ind = np.nonzero(run_bool)
-            xvals = xrange[0] + sims_array_ind[0] * (xrange[1] - xrange[0]) / (n_sims - 1)
-            yvals = yrange[0] + sims_array_ind[1] * (yrange[1] - yrange[0]) / (n_sims - 1)
-
-            # Evaluate
-            res = func(xvals, yvals, *args)
-
-            # Organise res
-            res_2d = np.nan * np.zeros([n_sims, n_sims])
-            for r in range(len(res)):
-                res_2d[sims_array_ind[0][r], sims_array_ind[1][r]] = res[r]
-            res_2d_sign = np.sign(res_2d)
-
-    a = np.nonzero(np.nan_to_num(np.diff(res_2d_sign, axis=0)))
-    b = np.nonzero(np.nan_to_num(np.diff(res_2d_sign, axis=1)))
-    c = np.nonzero(np.nan_to_num(res_2d_sign[:-1, :-1] - res_2d_sign[1:, 1:]))
-    xpoints = np.r_[a[0], b[0], c[0]]
-    ypoints = np.r_[a[1], b[1], c[1]]
-
-    xpoints = xrange[0] + (xpoints / n_sims) * (xrange[1] - xrange[0])
-    ypoints = yrange[0] + (ypoints / n_sims) * (yrange[1] - yrange[0])
-    return xpoints, ypoints
-
-
-"""
-PDE solver
-
-"""
-
-
-def diffusion(concs, dx=1):
-    """
-    Simulate single diffusion time step, with reflective boundary conditions
-
-    :param concs: 1D array of concentrations across space
-    :param dx: optional, spatial distance between points
-    :return:
-    """
-
-    d = concs[np.r_[np.array(range(1, len(concs))), len(concs) - 1]] - 2 * concs + concs[
-        np.r_[0, np.array(range(len(concs) - 1))]]
-    return d / (dx ** 2)
-
-
-def pdeRK(dxdt, X0, Tmax, deltat, t_eval, killfunc=None, stabilitycheck=False):
-    """
-
-    Function for solving system of PDEs using adaptive Runge-Kutta method
-    Adapted from Hubatsch 2019
-
-    :param dxdt: function, takes list of 1D arrays corresponding to concentrations over space, returns list of gradients
-    :param X0: starting conditions, list of 1D arrays
-    :param Tmax: maximum time
-    :param deltat: initial timestep
-    :param t_eval: array of timepoints to save
-    :param killfunc: optional func, takes same input as dxdt, integration will terminate when func returns True
-    :param stabilitycheck: if True, will terminate integration when system changes by less that 1% per minute
-
-    Returns
-    X: final state
-    time: final time
-    X_stored: saved states according to t_eval
-    t_stored: times corresponding to X_stored. Will npt be exactly the same as t_eval but should be close
-
-    """
-
-    # Adaptive step size parameters
-    atol = 0.000001
-    rtol = 0.000001
-
-    # 5TH ORDER RK COEFFICIENTS for Dormand-Prince
-    a21, a31, a32, a41, a42, a43 = 1 / 5, 3 / 40, 9 / 40, 44 / 45, -56 / 15, 32 / 9
-    a51, a52, a53, a54 = 19372 / 6561, -25360 / 2187, 64448 / 6561, -212 / 729
-    a61, a62, a63 = 9017 / 3168, -355 / 33, 46732 / 5247
-    a64, a65 = 49 / 176, -5103 / 18656
-    a71, a72, a73, a74 = 35 / 384, 0, 500 / 1113, 125 / 192
-    a75, a76 = -2187 / 6784, 11 / 84
-
-    b1, b2, b3, b4, b5 = 35 / 384, 0, 500 / 1113, 125 / 192, -2187 / 6784
-    b6, b7 = 11 / 84, 0
-
-    bs1, bs2, bs3, bs4 = 5179 / 57600, 0, 7571 / 16695, 393 / 640
-    bs5, bs6, bs7 = -92097 / 339200, 187 / 2100, 1 / 40
-
-    # Set up
-    X = X0
-    testsoln = dxdt(X)
-    nvars = len(testsoln)
-    spatial_points = len(testsoln[0])
-    t_stored = np.zeros([len(t_eval)])
-    X_stored = [np.zeros([len(t_eval), spatial_points]) for _ in range(nvars)]
-    n_stored_times = 0
-
-    # Run
-    time = 0
-    updated = None
-    terminate = False
-    while not terminate:
-        if time > Tmax:
-            terminate = True
-
-        # Calculate increments for RK45
-        if (time == 0) or not updated:
-            X1 = dxdt(X)
-        else:
-            X1 = X7
-
-        X2 = dxdt([X[i] + deltat * (a21 * X1[i]) for i in range(nvars)])
-        X3 = dxdt([X[i] + deltat * (a31 * X1[i] + a32 * X2[i]) for i in range(len(X))])
-        X4 = dxdt([X[i] + deltat * (a41 * X1[i] + a42 * X2[i] + a43 * X3[i]) for i in range(nvars)])
-        X5 = dxdt([X[i] + deltat * (a51 * X1[i] + a52 * X2[i] + a53 * X3[i] + a54 * X4[i]) for i in range(nvars)])
-        X6 = dxdt([X[i] + deltat * (a61 * X1[i] + a62 * X2[i] + a63 * X3[i] + a64 * X4[i] + a65 * X5[i]) for i in
-                   range(nvars)])
-        X7 = dxdt([X[i] + deltat * (a71 * X1[i] + a73 * X3[i] + a74 * X4[i] + a75 * X5[i] + a76 * X6[i]) for i in
-                   range(nvars)])
-
-        # Update concentrations using A1-A6 and P1-P6, coefficient for A7 and P7 is 0.
-        Xn_new = [X[i] + deltat * (b1 * X1[i] + b3 * X3[i] + b4 * X4[i] + b5 * X5[i] + b6 * X6[i]) for i in
-                  range(nvars)]  # b2/7=0
-
-        # Compute difference between fourth and fifth order
-        deltaXnerr = [max(abs(
-            (b1 - bs1) * X1[i] + (b3 - bs3) * X3[i] + (b4 - bs4) * X4[i] + (b5 - bs5) * X5[i] + (b6 - bs6) * X6[
-                i] - bs7 * X7[i])) for i in range(nvars)]  # b7 is zero
-
-        # Get maximum concentrations for An and Pn
-        yXn = [np.maximum(max(abs(Xn_new[i])), max(abs(X[i]))) for i in range(nvars)]
-
-        # Get error scale, combining relative and absolute error
-        scaleXn = [atol + yXn[i] * rtol for i in range(nvars)]
-
-        # Compute total error as norm of maximum errors for each species scaled by the error scale
-        errs = [(deltaXnerr[i] / scaleXn[i]) ** 2 for i in range(nvars)]
-        totalerror = np.sqrt(sum(errs) / nvars)
-
-        # Compute new timestep
-        # sometimes see "RuntimeWarning: divide by zero encountered in double_scalars". Need to look into
-        dtnew = 0.8 * deltat * abs(1 / totalerror) ** (1 / 5)
-
-        # Upper and lower bound for timestep to avoid changing too fast
-        if dtnew > 10 * deltat:
-            dtnew = 10 * deltat
-        elif dtnew < deltat / 5:
-            dtnew = deltat / 5
-
-        # Compute max percentage change
-        change = max(max(abs(X[i] - Xn_new[i]) / Xn_new[i]) * (60 / dtnew) for i in range(nvars))
-
-        # Set timestep for next round
-        deltat = dtnew
-
-        # Accept step if error is on the order of error scale or below
-        if totalerror < 1:
-            time += deltat
-            X = Xn_new
-            updated = True
-
-            # Store
-            if sum(time > t_eval) > n_stored_times:
-                t_stored[n_stored_times] = time
-                for i in range(nvars):
-                    X_stored[i][n_stored_times, :] = X[i]
-                n_stored_times += 1
-
-            # Kill function
-            if killfunc is not None:
-                brk = killfunc(X)
-                if brk:
-                    break
-
-            # Check stability:
-            if stabilitycheck:
-                if change < 0.001:
-                    break
-
-        else:
-            updated = False
-
-    return X, time, X_stored, t_stored
-
-
-"""
-Parameter space
+To do: function to link boundary points
 
 """
 
@@ -291,7 +59,8 @@ class ParamSpace1D:
 
 class ParamSpace2D:
     def __init__(self, func, p1_range, p2_range, resolution0, direc, resolution_step=2, n_iterations=1,
-                 explore_boundaries=True, parallel=False, cores=None, crange=None, cmap=None, save_fig=True):
+                 explore_boundaries=True, parallel=False, cores=None, crange=None, cmap=None, save_fig=True, args=[],
+                 replace=False):
         """
 
         Class to perform parameter space sweeps
@@ -310,6 +79,7 @@ class ParamSpace2D:
         :param explore_boundaries: if True, will focus parameter search to regions where func result varies
         :param parallel: if True, will run in parallel using number of cores specified
         :param cores: number of cores on machine to use in parallel
+        :param args: additional arguments for func
 
         # Saving parameters
         :param direc: directory to save results. Directory must already exist
@@ -334,6 +104,7 @@ class ParamSpace2D:
         self.n_iterations = n_iterations
         self.explore_boundaries = explore_boundaries
         self.parallel = parallel
+        self.args = args
 
         if cores is None:
             self.cores = multiprocessing.cpu_count()
@@ -343,6 +114,7 @@ class ParamSpace2D:
         # Saving
         self.direc = direc
         self.save_fig = save_fig
+        self.replace = replace
 
         # Figure
         if crange is None:
@@ -363,7 +135,7 @@ class ParamSpace2D:
         """
 
         # Run function
-        state = self.func(*[float(i) for i in p1val_p2val.split(',')])
+        state = self.func(*[float(i) for i in p1val_p2val.split(',')] + self.args)
 
         # Save state
         with open(self.direc + '/' + str(self.iteration) + '.csv', 'a') as f:
@@ -403,6 +175,11 @@ class ParamSpace2D:
         Run algorithm, save figure
 
         """
+
+        # Clear results directory if replace is True
+        if self.replace:
+            if os.path.isdir(self.direc):
+                shutil.rmtree(self.direc)
 
         # Make results directory, if it doesn't already exist
         if not os.path.isdir(self.direc):
@@ -522,9 +299,8 @@ class ParamSpace2D:
 
         # Save figure
         if self.save_fig:
-            fig, ax = self.fig()
-            fig.set_size_inches(4, 4)
-            fig.tight_layout()
+            plt.close()
+            fig, ax = self.figure()
             plt.savefig(self.direc + '/fig.png', dpi=300)
             plt.close()
 
@@ -539,7 +315,7 @@ class ParamSpace2D:
                     "{:.0f}".format(value) if formats[j] else "{:.12f}".format(value) for j, value in enumerate(row))
                 fh.write(line + '\n')
 
-    def fig(self):
+    def figure(self):
         """
         Parameter space plot
 
@@ -556,6 +332,8 @@ class ParamSpace2D:
         # Figure adjustments
         ax.set_xlim(self.p1_range[0], self.p1_range[1])
         ax.set_ylim(self.p2_range[0], self.p2_range[1])
+        fig.set_size_inches(4, 4)
+        fig.tight_layout()
         return fig, ax
 
 
@@ -638,42 +416,3 @@ def findzone(array, x, y):
         if len(vals) != 0:
             val = np.nanmax(vals)
     return val
-
-
-"""
-Misc
-
-"""
-
-
-def animatePAR(direc):
-    """
-    Display an animation for PAR model
-
-    direc: directory to results
-
-    """
-
-    times = np.loadtxt(direc + '/times.txt')
-    A = np.loadtxt(direc + '/A.txt')
-    P = np.loadtxt(direc + '/P.txt')
-
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
-    plt.subplots_adjust(bottom=0.25, wspace=0.5)
-    axframe = plt.axes([0.25, 0.1, 0.65, 0.03])
-    sframe = Slider(axframe, 'Time (s)', 0, times[-1], valinit=0, valfmt='%d')
-
-    def update(i):
-        ax.clear()
-        tpoint = np.argmin(abs(times - int(i)))
-        a = A[tpoint, :]
-        p = P[tpoint, :]
-        ax.plot(a, c='tab:red')
-        ax.plot(p, c='tab:blue')
-        ax.set_ylim(bottom=0)
-        ax.set_ylabel('Cortical concentration (a.u.)')
-        ax.set_xlabel('Position (μm)')
-
-    sframe.on_changed(update)
-    plt.show()

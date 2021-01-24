@@ -1,3 +1,9 @@
+import sys
+import os
+
+home_direc = os.path.dirname(os.path.realpath(__file__))
+sys.path.append(home_direc + '/../..')
+
 import numpy as np
 from scipy.integrate import odeint
 
@@ -53,7 +59,7 @@ class WP:
         U = X[0]
         V = self.p0 - U
         dUdU = V * (self.k0 + (self.gamma * ((U + step) ** 2)) / ((self.K ** 2) + ((U + step) ** 2))) - (
-            self.delta * (U + step))
+                self.delta * (U + step))
         return dUdU / step
 
     def bistability(self):

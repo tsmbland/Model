@@ -5,11 +5,11 @@ home_direc = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(home_direc + '/../..')
 
 import numpy as np
-from ModelFuncs import pdeRK, diffusion
+from parmodel import pdeRK, diffusion
 
 
-class OT:
-    def __init__(self, D, a1, a2, s, p0, xsteps=100, Tmax=1000, deltat=0.01, deltax=0.1):
+class GOR:
+    def __init__(self, D, a1, a2, a3, p0, xsteps=100, Tmax=1000, deltat=0.01, deltax=0.1):
 
         # Species
         self.U = np.zeros([int(xsteps)])
@@ -24,7 +24,7 @@ class OT:
         # Membrane exchange
         self.a1 = a1
         self.a2 = a2
-        self.s = s
+        self.a3 = a3
 
         # Misc
         self.xsteps = int(xsteps)
@@ -35,7 +35,7 @@ class OT:
     def dxdt(self, X):
         U = X[0]
         V = self.p0 - np.mean(U)
-        dUdt = self.a1 * (V - (U + V) / ((self.a2 * self.s * (U + V) + 1) ** 2)) + (self.D * diffusion(U, self.deltax))
+        dUdt = (self.a1 * (U ** 2) * V) + (self.a2 * U * V) - (self.a3 * U) + (self.D * diffusion(U, self.deltax))
         return [dUdt]
 
     def initiate(self):
@@ -62,4 +62,3 @@ class OT:
         if save_direc is not None:
             np.savetxt(save_direc + '/U.txt', solns[0])
             np.savetxt(save_direc + '/times.txt', times)
-

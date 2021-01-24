@@ -5,7 +5,7 @@ home_direc = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(home_direc + '/../..')
 
 import numpy as np
-from ModelFuncs import pdeRK, diffusion
+from parmodel import pdeRK, diffusion
 
 
 class WP:

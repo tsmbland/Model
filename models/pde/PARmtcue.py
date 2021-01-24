@@ -5,8 +5,8 @@ home_direc = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(home_direc + '/../..')
 
 import numpy as np
-from ModelFuncs import pdeRK, diffusion
-from Models.ODE.PAR import PAR as ODE
+from parmodel import pdeRK, diffusion
+from models.ode.PAR import PAR as ODE
 from scipy.integrate import odeint
 
 
@@ -67,7 +67,7 @@ class PAR:
 
     def initiate(self):
 
-        # Solve ODE, no antagonism
+        # Solve ode, no antagonism
         o = ODE(konA=self.konA, koffA=self.koffA, kposA=self.kposA, konP=self.konP, koffP=self.koffP, kposP=self.kposP,
                 ePneg=self.ePneg, eAneg=self.eAneg, psi=self.psi, pA=self.pA, pP=self.pP, kAP=0, kPA=0)
         soln = odeint(o.dxdt, (0, 0), t=np.linspace(0, 10000, 100000))[-1]
@@ -81,7 +81,7 @@ class PAR:
 
     def initiate2(self):
 
-        # Solve ODE
+        # Solve ode
         o = ODE(konA=self.konA, koffA=self.koffA, kposA=self.kposA, konP=self.konP, koffP=self.koffP, kposP=self.kposP,
                 ePneg=self.ePneg, eAneg=self.eAneg, psi=self.psi, pA=self.pA, pP=self.pP, kAP=self.kAP, kPA=self.kPA)
         soln = odeint(o.dxdt, (o.pA / o.psi, 0), t=np.linspace(0, 10000, 100000))[-1]
@@ -96,7 +96,7 @@ class PAR:
 
     def initiate3(self, asi):
 
-        # Solve ODE
+        # Solve ode
         o = ODE(konA=self.konA, koffA=self.koffA, kposA=self.kposA, konP=self.konP, koffP=self.koffP, kposP=self.kposP,
                 ePneg=self.ePneg, eAneg=self.eAneg, psi=self.psi, pA=self.pA, pP=self.pP, kAP=self.kAP, kPA=self.kPA)
         sol = odeint(o.dxdt, (o.pA / o.psi, 0), t=np.linspace(0, 10000, 100000))[-1]

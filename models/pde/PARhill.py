@@ -5,8 +5,8 @@ home_direc = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(home_direc + '/../..')
 
 import numpy as np
-from ModelFuncs import pdeRK, diffusion
-from Models.ODE.PAR import PAR as ODE
+from parmodel import pdeRK, diffusion
+from models.ode.PAR import PAR as ODE
 from scipy.integrate import odeint
 
 
@@ -58,14 +58,14 @@ class PAR:
         ac = self.pA - self.psi * np.mean(A)
         pc = self.pP - self.psi * np.mean(P)
         dA = ((self.konA * ac) - (self.koffA * A) - (self.kAP * (P ** self.ePneg) * A) + (
-            self.kposA * ac * A / (self.khillA + A)) + (self.Da * diffusion(A, self.deltax)))
+                self.kposA * ac * A / (self.khillA + A)) + (self.Da * diffusion(A, self.deltax)))
         dP = ((self.konP * pc) - (self.koffP * P) - (self.kPA * (A ** self.eAneg) * P) + (
-            self.kposP * pc * P / (self.khillP + P)) + (self.Dp * diffusion(P, self.deltax)))
+                self.kposP * pc * P / (self.khillP + P)) + (self.Dp * diffusion(P, self.deltax)))
         return [dA, dP]
 
     def initiate(self):
 
-        # Solve ODE, no antagonism
+        # Solve ode, no antagonism
         o = ODE(konA=self.konA, koffA=self.koffA, kposA=self.kposA, konP=self.konP, koffP=self.koffP, kposP=self.kposP,
                 ePneg=self.ePneg, eAneg=self.eAneg, psi=self.psi, pA=self.pA, pP=self.pP, kAP=0, kPA=0)
         soln = odeint(o.dxdt, (0, 0), t=np.linspace(0, 10000, 100000))[-1]
@@ -79,7 +79,7 @@ class PAR:
 
     def initiate2(self):
 
-        # Solve ODE
+        # Solve ode
         o = ODE(konA=self.konA, koffA=self.koffA, kposA=self.kposA, konP=self.konP, koffP=self.koffP, kposP=self.kposP,
                 ePneg=self.ePneg, eAneg=self.eAneg, psi=self.psi, pA=self.pA, pP=self.pP, kAP=self.kAP, kPA=self.kPA)
         soln = odeint(o.dxdt, (o.pA / o.psi, 0), t=np.linspace(0, 10000, 100000))[-1]
@@ -94,7 +94,7 @@ class PAR:
 
     def initiate3(self, asi):
 
-        # Solve ODE
+        # Solve ode
         o = ODE(konA=self.konA, koffA=self.koffA, kposA=self.kposA, konP=self.konP, koffP=self.koffP, kposP=self.kposP,
                 ePneg=self.ePneg, eAneg=self.eAneg, psi=self.psi, pA=self.pA, pP=self.pP, kAP=self.kAP, kPA=self.kPA)
         sol = odeint(o.dxdt, (o.pA / o.psi, 0), t=np.linspace(0, 10000, 100000))[-1]
@@ -143,23 +143,16 @@ class PAR:
             np.savetxt(save_direc + '/P.txt', solns[1])
             np.savetxt(save_direc + '/times.txt', times)
 
+
 # import matplotlib.pyplot as plt
-# from Funcs import animatePAR
+# from ModelFuncs import animatePAR
 #
-# kon0 = -1.75
-# x = 0.85
-#
-# m = PAR(Da=0.1, Dp=0.1, konA=0.1, koffA=0.01, kposA=0, konP=0.1, koffP=0.0101, kposP=0, kAP=0.5, kPA=0.5,
-#         ePneg=1, eAneg=1, xsteps=100, Tmax=10000, deltat=0.01, L=50, psi=0.1, pA=1, pP=1)
-#
-# kon0 = 10 ** kon0
-# m.konP = kon0 * (1 - x)
-# m.konA = kon0 * (1 - x)
-# m.kposP = x * (m.psi * kon0 + m.koffP) / 1
-# m.kposA = x * (m.psi * kon0 + m.koffA) / 1
+# m = PAR(Da=0.28, Dp=0.15, konA=0.02115, koffA=0.0092, konP=0.00981, koffP=0.0073, kAP=0, kPA=0, eAneg=0,
+#         ePneg=0, xsteps=100, psi=0.174, Tmax=1000, deltat=0.01, L=67.3, pA=1.56, pP=1, kposA=0, kposP=0.882,
+#         khillA=1, khillP=22.19)
 #
 # m.initiate()
-# m.run(save_direc='_test', save_gap=10)
+# m.run(kill_uni=False, save_direc='_test', save_gap=10)
 # animatePAR('_test')
 #
 # # plt.plot(m.A)
