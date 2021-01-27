@@ -34,3 +34,14 @@ class Goehring2011:
         dA = (self.konA * Acyt) - (self.koffA * A) - (self.kAP * (P ** self.alpha) * A)
         dP = (self.konP * Pcyt) - (self.koffP * P) - (self.kPA * (A ** self.beta) * P)
         return [dA, dP]
+
+    def jacobian(self, X, step=0.0001):
+        A = X[0]
+        P = X[1]
+        Acyt = self.pA - self.psi * A
+        Pcyt = self.pP - self.psi * P
+        dPdA = (self.konP * Pcyt) - (self.koffP * P) - (self.kPA * ((A + step) ** self.beta) * P)
+        dAdP = (self.konA * Acyt) - (self.koffA * A) - (self.kAP * ((P + step) ** self.alpha) * A)
+        dAdA = (self.konA * Acyt) - (self.koffA * (A + step)) - (self.kAP * (P ** self.alpha) * (A + step))
+        dPdP = (self.konP * Pcyt) - (self.koffP * (P + step)) - (self.kPA * (A ** self.beta) * (P + step))
+        return np.r_[np.c_[dAdA, dAdP], np.c_[dPdA, dPdP]] / step

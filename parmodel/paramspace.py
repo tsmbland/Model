@@ -59,7 +59,7 @@ class ParamSpace1D:
 
 class ParamSpace2D:
     def __init__(self, func, p1_range, p2_range, resolution0, direc, resolution_step=2, n_iterations=1,
-                 explore_boundaries=True, parallel=False, cores=None, crange=None, cmap=None, save_fig=True, args=[],
+                 explore_boundaries=True, parallel=False, cores=None, crange=None, cmap=None, save_fig=False, args=[],
                  replace=False):
         """
 

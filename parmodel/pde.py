@@ -33,7 +33,7 @@ def pdeRK(dxdt, X0, Tmax, deltat, t_eval, killfunc=None, stabilitycheck=False):
     X: final state
     time: final time
     X_stored: saved states according to t_eval
-    t_stored: times corresponding to X_stored. Will npt be exactly the same as t_eval but should be close
+    t_stored: times corresponding to X_stored. Will not be exactly the same as t_eval but should be close
 
     """
 
@@ -59,9 +59,8 @@ def pdeRK(dxdt, X0, Tmax, deltat, t_eval, killfunc=None, stabilitycheck=False):
     X = X0
     testsoln = dxdt(X)
     nvars = len(testsoln)
-    spatial_points = len(testsoln[0])
-    t_stored = np.zeros([len(t_eval)])
-    X_stored = [np.zeros([len(t_eval), spatial_points]) for _ in range(nvars)]
+    t_stored = []
+    X_stored = [[] for _ in range(nvars)]
     n_stored_times = 0
 
     # Run
@@ -130,23 +129,31 @@ def pdeRK(dxdt, X0, Tmax, deltat, t_eval, killfunc=None, stabilitycheck=False):
 
             # Store
             if sum(time > t_eval) > n_stored_times:
-                t_stored[n_stored_times] = time
+                t_stored.append(time)
                 for i in range(nvars):
-                    X_stored[i][n_stored_times, :] = X[i]
+                    X_stored[i].append(X[i])
                 n_stored_times += 1
 
             # Kill function
             if killfunc is not None:
                 brk = killfunc(X)
                 if brk:
+                    t_stored.append(time)
+                    for i in range(nvars):
+                        X_stored[i].append(X[i])
                     break
 
             # Check stability:
             if stabilitycheck:
                 if change < 0.001:
+                    t_stored.append(time)
+                    for i in range(nvars):
+                        X_stored[i].append(X[i])
                     break
 
         else:
             updated = False
 
-    return X, time, X_stored, t_stored
+    t_stored_ = np.array(t_stored)
+    X_stored_ = [np.array(X_stored[i]) for i in range(nvars)]
+    return X, time, X_stored_, t_stored_
