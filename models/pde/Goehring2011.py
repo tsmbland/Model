@@ -5,7 +5,7 @@ home_direc = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(home_direc + '/../..')
 
 import numpy as np
-from parmodel import pdeRK, diffusion
+from polaritymodel import pdeRK, diffusion
 from models.ode.Goehring2011 import Goehring2011 as ODE
 from scipy.integrate import odeint
 
@@ -74,25 +74,6 @@ class Goehring2011:
         # Polarise
         self.A *= 2 * np.r_[np.ones([self.xsteps // 2]), np.zeros([self.xsteps // 2])]
         self.P *= 2 * np.r_[np.zeros([self.xsteps // 2]), np.ones([self.xsteps // 2])]
-
-    def initiate2(self):
-        """
-        Initiating the system (near) uniform, A dominant
-
-        """
-
-        # Solve ode
-        o = ODE(konA=self.konA, koffA=self.koffA, konP=self.konP, koffP=self.koffP, alpha=self.alpha, beta=self.beta,
-                psi=self.psi, pA=self.pA, pP=self.pP, kAP=0, kPA=0)
-        soln = odeint(o.dxdt, (o.pA / o.psi, 0), t=np.linspace(0, 10000, 100000))[-1]
-
-        # Set concentrations
-        self.A[:] = soln[0]
-        self.P[:] = soln[1]
-
-        # Polarise
-        self.A *= np.linspace(1.01, 0.99, self.xsteps)
-        self.P *= np.linspace(0.99, 1.01, self.xsteps)
 
     def run(self, save_direc=None, save_gap=None, kill_uni=False, kill_stab=False):
         """

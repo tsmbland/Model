@@ -5,7 +5,7 @@ home_direc = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(home_direc + '/../..')
 
 import numpy as np
-from parmodel import pdeRK, diffusion
+from polaritymodel import pdeRK, diffusion
 
 
 class OT:

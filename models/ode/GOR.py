@@ -68,7 +68,7 @@ class GOR:
         else:
             return 1
 
-    def bistability_instability(self):
+    def lsa(self):
         """
         Bistability + instability regions - solved using odeint
 

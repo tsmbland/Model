@@ -1,4 +1,4 @@
-# PAR model
+# polaritymodel
 
 Functions for simulating cell polarity PDE models, and performing parameter space analysis.
 
@@ -17,3 +17,4 @@ simulations and performing analysis.
 Open these notebooks by running:
 
     jupyter notebook notebooks/INDEX.ipynb
+    

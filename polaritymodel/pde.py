@@ -19,7 +19,7 @@ def pdeRK(dxdt, X0, Tmax, deltat, t_eval, killfunc=None, stabilitycheck=False):
     """
 
     Function for solving system of PDEs using adaptive Runge-Kutta method
-    Adapted from Hubatsch 2019
+    Adapted from Hubatsch et al., 2019 (see https://github.com/lhcgeneva/PARmodelling)
 
     :param dxdt: function, takes list of 1D arrays corresponding to concentrations over space, returns list of gradients
     :param X0: starting conditions, list of 1D arrays

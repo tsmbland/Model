@@ -69,7 +69,7 @@ class OT:
         else:
             return 1
 
-    def bistability_instability(self):
+    def lsa(self):
         """
         Bistability + instability regions - solved using odeint
 
@@ -116,21 +116,3 @@ class OT:
             else:
                 # Both unstable
                 return 6
-
-###############################################################################
-
-
-# import time
-#
-# t = time.time()
-#
-#
-# def evaluate1(p0, a2):
-#     return OT(a1=1, a2=a2, s=1, p0=p0).bistability_instability()
-#
-#
-# a = Bifurcation2D(evaluate1, p1_range=(0, 5), p2_range=(0, 5), log=False, cores=4, resolution0=50,
-#                   resolution_step=2, n_iterations=5, direc='_test2', parallel=False, crange=[1, 6])
-# a.run()
-#
-# print(time.time() - t)

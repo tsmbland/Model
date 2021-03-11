@@ -5,7 +5,7 @@ home_direc = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(home_direc + '/../..')
 
 import numpy as np
-from parmodel import pdeRK, diffusion
+from polaritymodel import pdeRK, diffusion
 
 
 class WP:
@@ -37,7 +37,7 @@ class WP:
         U = X[0]
         V = self.p0 - np.mean(U)
         dU = V * (self.k0 + (self.gamma * (U ** 2)) / ((self.K ** 2) + (U ** 2))) - (self.delta * U) + (
-            self.D * diffusion(U, self.deltax))
+                self.D * diffusion(U, self.deltax))
         return [dU]
 
     def initiate(self):
@@ -64,60 +64,3 @@ class WP:
         if save_direc is not None:
             np.savetxt(save_direc + '/U.txt', solns[0])
             np.savetxt(save_direc + '/times.txt', times)
-
-# from Funcs import Bifurcation2D
-# import time
-# import matplotlib.pyplot as plt
-#
-#
-# def evaluate1(k0, p0):
-#     m = WP(k0=k0, p0=p0)
-#     m.initiate()
-#     m.run()
-#     return m.state()
-#
-#
-# a = Bifurcation2D(evaluate1, p1_range=(0.0001, 0.12), p2_range=(0.0001, 4), log=False, cores=4, resolution0=5,
-#                   resolution_step=2, n_iterations=2, direc='_test', parallel=True, crange=[1, 2])
-#
-# t = time.time()
-# a.run()
-# print(time.time() - t)
-
-
-# m = WP()
-# m.initiate()
-# m.run(save_direc='_test', save_gap=10)
-#
-# from matplotlib.widgets import Slider
-#
-#
-# def animate(direc):
-#     """
-#     direc: directory to results
-#
-#     """
-#
-#     times = np.loadtxt(direc + '/times.txt')
-#     U = np.loadtxt(direc + '/U.txt')
-#
-#     fig = plt.figure()
-#     ax = fig.add_subplot(111)
-#     plt.subplots_adjust(bottom=0.25, wspace=0.5)
-#     axframe = plt.axes([0.25, 0.1, 0.65, 0.03])
-#     sframe = Slider(axframe, 'Time (s)', 0, times[-1], valinit=0, valfmt='%d')
-#
-#     def update(i):
-#         ax.clear()
-#         tpoint = np.argmin(abs(times - int(i)))
-#         u = U[tpoint, :]
-#         ax.plot(u, c='tab:red')
-#         # ax.set_ylim(bottom=0)
-#         ax.set_ylabel('Cortical concentration (a.u.)')
-#         ax.set_xlabel('Position (μm)')
-#
-#     sframe.on_changed(update)
-#     plt.show()
-#
-#
-# animate('_test')
