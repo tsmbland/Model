@@ -4,7 +4,7 @@ Functions for simulating cell polarity PDE models, and performing parameter spac
 
 ## Install instructions
 
-To install the necessary packages, navigate to Model folder in terminal, and run the following commands in order:
+To install the necessary packages, navigate to this folder in terminal, and run the following commands in order:
 
     conda create -n model python=3.7 anaconda=2020.11
     conda activate model
