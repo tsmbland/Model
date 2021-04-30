@@ -56,7 +56,7 @@ class GOR:
 
 
 class OT:
-    def __init__(self, D, a1, a2, s, p0, xsteps=100, Tmax=1000, deltat=0.01, deltax=0.1):
+    def __init__(self, D=0.1, a1=1, a2=0.7, s=1, p0=10, xsteps=100, Tmax=1000, deltat=0.01, deltax=0.1):
         # Species
         self.U = np.zeros([int(xsteps)])
         self.time = 0
@@ -85,14 +85,20 @@ class OT:
         return [dUdt]
 
     def initiate(self):
-        # Initial equilibration
-        Tmax = self.Tmax / 10
-        soln, time, solns, times = pdeRK(dxdt=self.dxdt, X0=[self.U], Tmax=Tmax, deltat=self.deltat,
-                                         t_eval=np.arange(0, Tmax + 0.0001, Tmax))
-        self.U = soln[0]
+        # Solve ODE, high state
+        o = ode.OT(a1=self.a1, a2=self.a2, s=self.s, p0=self.p0)
+        soln = odeint(o.dxdt, [self.p0], t=np.linspace(0, 10000, 100000))[-1]
 
         # Polarise
-        self.U *= 2 * np.r_[np.zeros([self.xsteps // 2]), np.ones([self.xsteps // 2])]
+        self.U = 2 * np.r_[np.zeros([self.xsteps // 2]), soln * np.ones([self.xsteps // 2])]
+
+    def initiate2(self):
+        # Solve ODE, high state
+        o = ode.OT(a1=self.a1, a2=self.a2, s=self.s, p0=self.p0)
+        soln = odeint(o.dxdt, [self.p0], t=np.linspace(0, 10000, 100000))[-1]
+
+        # Polarise
+        self.U = soln * np.r_[0.99 * np.ones([self.xsteps // 2]), 1.01 * np.ones([self.xsteps // 2])]
 
     def run(self, save_gap=None):
         if save_gap is None:

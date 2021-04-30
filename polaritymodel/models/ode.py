@@ -23,7 +23,7 @@ class GOR:
 
     """
 
-    def __init__(self, a1, a2, a3, p0):
+    def __init__(self, a1=0.0067, a2=0.0033, a3=0.01, p0=1):
         self.a1 = a1
         self.a2 = a2
         self.a3 = a3
@@ -35,7 +35,7 @@ class GOR:
         dU = (self.a1 * (U ** 2) * V) + (self.a2 * U * V) - (self.a3 * U)
         return [dU]
 
-    def jacobian(self, X, step=0.0001):
+    def jacobian(self, X, step=0.00001):
         U = X[0]
         V = self.p0 - X[0]
         dUdU = (self.a1 * ((U + step) ** 2) * V) + (self.a2 * (U + step) * V) - (self.a3 * (U + step))
@@ -126,7 +126,7 @@ class OT:
 
     """
 
-    def __init__(self, a1, a2, s, p0):
+    def __init__(self, a1=1, a2=0.7, s=1, p0=2):
         self.a1 = a1
         self.a2 = a2
         self.s = s

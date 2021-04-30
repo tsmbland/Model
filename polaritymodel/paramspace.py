@@ -299,10 +299,9 @@ class ParamSpace2D:
 
         # Save figure
         if self.save_fig:
-            plt.close()
             fig, ax = self.figure()
-            plt.savefig(self.direc + '/fig.png', dpi=300)
-            plt.close()
+            fig.savefig(self.direc + '/fig.png', dpi=300)
+            fig.close()
 
         # Specify int/float format
         f = (self.res % 1) == 0
@@ -322,7 +321,6 @@ class ParamSpace2D:
         """
 
         # Set up
-        plt.close()
         fig, ax = plt.subplots()
 
         # Colours
