@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def diffusion(concs, dx=1):
+def diffusion(concs, dx=1, pad=True):
     """
     Simulate single diffusion time step, with reflective boundary conditions
 
@@ -10,8 +10,9 @@ def diffusion(concs, dx=1):
     :return:
     """
 
-    d = concs[np.r_[np.array(range(1, len(concs))), len(concs) - 1]] - 2 * concs + concs[
-        np.r_[0, np.array(range(len(concs) - 1))]]
+    d = concs[:-2] - 2 * concs[1:-1] + concs[2:]
+    if pad:
+        d = np.pad(d, 1)
     return d / (dx ** 2)
 
 
