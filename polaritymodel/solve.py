@@ -15,8 +15,6 @@ def evaluate(func, xrange, yrange, resolution0=1000, iterations=1, resolution_st
     :return: two 1D arrays of points corresponding to x and y coordinates. NB these are UNORDERED, plot using
         plt.scatter(xpoints,ypoints)
 
-    Probably can do this really easily with a scipy function
-
     """
 
     for iteration in range(iterations):

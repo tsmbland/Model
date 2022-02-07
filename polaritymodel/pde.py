@@ -1,21 +1,26 @@
 import numpy as np
+# from numba import njit
 
 
+# @njit(cache=True)
 def diffusion(concs, dx=1, pad=True):
     """
-    Simulate single diffusion time step, with reflective boundary conditions
+    Simulate single diffusion time step
 
     :param concs: 1D array of concentrations across space
-    :param dx: optional, spatial distance between points
+    :param dx: spatial distance between points
     :return:
     """
 
-    d = concs[:-2] - 2 * concs[1:-1] + concs[2:]
     if pad:
-        d = np.pad(d, 1)
+        d = np.zeros(concs.shape)
+        d[1:-1] = concs[:-2] - 2 * concs[1:-1] + concs[2:]
+    else:
+        d = concs[:-2] - 2 * concs[1:-1] + concs[2:]
     return d / (dx ** 2)
 
 
+# @njit(cache=True)
 def pdeRK(dxdt, X0, Tmax, deltat, t_eval, killfunc=None, stabilitycheck=False):
     """
 
