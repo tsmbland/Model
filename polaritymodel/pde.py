@@ -13,15 +13,15 @@ def diffusion(concs, dx=1, pad=True):
     """
 
     if pad:
-        d = np.zeros(concs.shape)
-        d[1:-1] = concs[:-2] - 2 * concs[1:-1] + concs[2:]
+        concs_ = np.r_[concs[0], concs, concs[-1]]
+        d = concs_[:-2] - 2 * concs_[1:-1] + concs_[2:]
     else:
         d = concs[:-2] - 2 * concs[1:-1] + concs[2:]
     return d / (dx ** 2)
 
 
 # @njit(cache=True)
-def pdeRK(dxdt, X0, Tmax, deltat, t_eval, killfunc=None, stabilitycheck=False):
+def pdeRK(dxdt, X0, Tmax, deltat, t_eval, killfunc=None, stabilitycheck=False, maxstep=None):
     """
 
     Function for solving system of PDEs using adaptive Runge-Kutta method
@@ -68,6 +68,8 @@ def pdeRK(dxdt, X0, Tmax, deltat, t_eval, killfunc=None, stabilitycheck=False):
     t_stored = []
     X_stored = [[] for _ in range(nvars)]
     n_stored_times = 0
+    if maxstep is None:
+        maxstep = 10 * deltat
 
     # Run
     time = 0
@@ -116,8 +118,8 @@ def pdeRK(dxdt, X0, Tmax, deltat, t_eval, killfunc=None, stabilitycheck=False):
         dtnew = 0.8 * deltat * abs(1 / totalerror) ** (1 / 5)
 
         # Upper and lower bound for timestep to avoid changing too fast
-        if dtnew > 10 * deltat:
-            dtnew = 10 * deltat
+        if dtnew > maxstep:
+            dtnew = maxstep
         elif dtnew < deltat / 5:
             dtnew = deltat / 5
 
