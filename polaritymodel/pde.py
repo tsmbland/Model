@@ -1,8 +1,6 @@
 import numpy as np
-# from numba import njit
 
 
-# @njit(cache=True)
 def diffusion(concs, dx=1, pad=True):
     """
     Simulate single diffusion time step
@@ -20,7 +18,6 @@ def diffusion(concs, dx=1, pad=True):
     return d / (dx ** 2)
 
 
-# @njit(cache=True)
 def pdeRK(dxdt, X0, Tmax, deltat, t_eval, killfunc=None, stabilitycheck=False, maxstep=None):
     """
 
@@ -63,6 +60,7 @@ def pdeRK(dxdt, X0, Tmax, deltat, t_eval, killfunc=None, stabilitycheck=False, m
 
     # Set up
     X = X0
+    X7 = None
     testsoln = dxdt(X)
     nvars = len(testsoln)
     t_stored = []
@@ -99,23 +97,23 @@ def pdeRK(dxdt, X0, Tmax, deltat, t_eval, killfunc=None, stabilitycheck=False, m
                   range(nvars)]  # b2/7=0
 
         # Compute difference between fourth and fifth order
-        deltaXnerr = [max(abs(
+        deltaXnerr = [np.max(np.abs(
             (b1 - bs1) * X1[i] + (b3 - bs3) * X3[i] + (b4 - bs4) * X4[i] + (b5 - bs5) * X5[i] + (b6 - bs6) * X6[
                 i] - bs7 * X7[i])) for i in range(nvars)]  # b7 is zero
 
         # Get maximum concentrations for An and Pn
-        yXn = [np.maximum(max(abs(Xn_new[i])), max(abs(X[i]))) for i in range(nvars)]
+        yXn = [np.maximum(np.max(np.abs(Xn_new[i])), np.max(np.abs(X[i]))) for i in range(nvars)]
 
         # Get error scale, combining relative and absolute error
         scaleXn = [atol + yXn[i] * rtol for i in range(nvars)]
 
         # Compute total error as norm of maximum errors for each species scaled by the error scale
         errs = [(deltaXnerr[i] / scaleXn[i]) ** 2 for i in range(nvars)]
-        totalerror = np.sqrt(sum(errs) / nvars)
+        totalerror = np.sqrt(np.sum(errs) / nvars)
 
         # Compute new timestep
         # sometimes see "RuntimeWarning: divide by zero encountered in double_scalars". Need to look into
-        dtnew = 0.8 * deltat * abs(1 / totalerror) ** (1 / 5)
+        dtnew = 0.8 * deltat * np.abs(1 / totalerror) ** (1 / 5)
 
         # Upper and lower bound for timestep to avoid changing too fast
         if dtnew > maxstep:
@@ -124,7 +122,7 @@ def pdeRK(dxdt, X0, Tmax, deltat, t_eval, killfunc=None, stabilitycheck=False, m
             dtnew = deltat / 5
 
         # Compute max percentage change
-        change = max(max(abs(X[i] - Xn_new[i]) / Xn_new[i]) * (60 / dtnew) for i in range(nvars))
+        change = np.max([np.max(np.abs(X[i] - Xn_new[i]) / Xn_new[i]) * (60 / dtnew) for i in range(nvars)])
 
         # Set timestep for next round
         deltat = dtnew
@@ -136,7 +134,7 @@ def pdeRK(dxdt, X0, Tmax, deltat, t_eval, killfunc=None, stabilitycheck=False, m
             updated = True
 
             # Store
-            if sum(time > t_eval) > n_stored_times:
+            if np.sum(time > t_eval) > n_stored_times:
                 t_stored.append(time)
                 for i in range(nvars):
                     X_stored[i].append(X[i])
