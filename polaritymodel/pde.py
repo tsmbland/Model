@@ -1,24 +1,7 @@
 import numpy as np
 
 
-def diffusion(concs, dx=1, pad=True):
-    """
-    Simulate single diffusion time step
-
-    :param concs: 1D array of concentrations across space
-    :param dx: spatial distance between points
-    :return:
-    """
-
-    if pad:
-        concs_ = np.r_[concs[0], concs, concs[-1]]
-        d = concs_[:-2] - 2 * concs_[1:-1] + concs_[2:]
-    else:
-        d = concs[:-2] - 2 * concs[1:-1] + concs[2:]
-    return d / (dx ** 2)
-
-
-def pdeRK(dxdt, X0, Tmax, deltat, t_eval, killfunc=None, stabilitycheck=False, maxstep=None):
+def pdeRK(dxdt, X0, Tmax, deltat, t_eval, killfunc=None, stabilitycheck=False, maxstep=None, rk=True):
     """
 
     Function for solving system of PDEs using adaptive Runge-Kutta method
@@ -77,55 +60,61 @@ def pdeRK(dxdt, X0, Tmax, deltat, t_eval, killfunc=None, stabilitycheck=False, m
         if time > Tmax:
             terminate = True
 
-        # Calculate increments for RK45
-        if (time == 0) or not updated:
-            X1 = dxdt(X)
+        if rk is True:
+            # Calculate increments for RK45
+            if (time == 0) or not updated:
+                X1 = dxdt(X)
+            else:
+                X1 = X7
+
+            X2 = dxdt([X[i] + deltat * (a21 * X1[i]) for i in range(nvars)])
+            X3 = dxdt([X[i] + deltat * (a31 * X1[i] + a32 * X2[i]) for i in range(len(X))])
+            X4 = dxdt([X[i] + deltat * (a41 * X1[i] + a42 * X2[i] + a43 * X3[i]) for i in range(nvars)])
+            X5 = dxdt([X[i] + deltat * (a51 * X1[i] + a52 * X2[i] + a53 * X3[i] + a54 * X4[i]) for i in range(nvars)])
+            X6 = dxdt([X[i] + deltat * (a61 * X1[i] + a62 * X2[i] + a63 * X3[i] + a64 * X4[i] + a65 * X5[i]) for i in
+                       range(nvars)])
+            X7 = dxdt([X[i] + deltat * (a71 * X1[i] + a73 * X3[i] + a74 * X4[i] + a75 * X5[i] + a76 * X6[i]) for i in
+                       range(nvars)])
+
+            # Update concentrations using A1-A6 and P1-P6, coefficient for A7 and P7 is 0.
+            Xn_new = [X[i] + deltat * (b1 * X1[i] + b3 * X3[i] + b4 * X4[i] + b5 * X5[i] + b6 * X6[i]) for i in
+                      range(nvars)]  # b2/7=0
+
+            # Compute difference between fourth and fifth order
+            deltaXnerr = [np.max(np.abs(
+                (b1 - bs1) * X1[i] + (b3 - bs3) * X3[i] + (b4 - bs4) * X4[i] + (b5 - bs5) * X5[i] + (b6 - bs6) * X6[
+                    i] - bs7 * X7[i])) for i in range(nvars)]  # b7 is zero
+
+            # Get maximum concentrations for An and Pn
+            yXn = [np.maximum(np.max(np.abs(Xn_new[i])), np.max(np.abs(X[i]))) for i in range(nvars)]
+
+            # Get error scale, combining relative and absolute error
+            scaleXn = [atol + yXn[i] * rtol for i in range(nvars)]
+
+            # Compute total error as norm of maximum errors for each species scaled by the error scale
+            errs = [(deltaXnerr[i] / scaleXn[i]) ** 2 for i in range(nvars)]
+            totalerror = np.sqrt(np.sum(errs) / nvars)
+
+            # Compute new timestep
+            # sometimes see "RuntimeWarning: divide by zero encountered in double_scalars". Need to look into
+            dtnew = 0.8 * deltat * np.abs(1 / totalerror) ** (1 / 5)
+
+            # Upper and lower bound for timestep to avoid changing too fast
+            if dtnew > maxstep:
+                dtnew = maxstep
+            elif dtnew < deltat / 5:
+                dtnew = deltat / 5
+
+            # Compute max percentage change
+            change = np.max([np.max(np.abs(X[i] - Xn_new[i]) / Xn_new[i]) * (60 / dtnew) for i in range(nvars)])
+
+            # Set timestep for next round
+            deltat = dtnew
+
         else:
-            X1 = X7
-
-        X2 = dxdt([X[i] + deltat * (a21 * X1[i]) for i in range(nvars)])
-        X3 = dxdt([X[i] + deltat * (a31 * X1[i] + a32 * X2[i]) for i in range(len(X))])
-        X4 = dxdt([X[i] + deltat * (a41 * X1[i] + a42 * X2[i] + a43 * X3[i]) for i in range(nvars)])
-        X5 = dxdt([X[i] + deltat * (a51 * X1[i] + a52 * X2[i] + a53 * X3[i] + a54 * X4[i]) for i in range(nvars)])
-        X6 = dxdt([X[i] + deltat * (a61 * X1[i] + a62 * X2[i] + a63 * X3[i] + a64 * X4[i] + a65 * X5[i]) for i in
-                   range(nvars)])
-        X7 = dxdt([X[i] + deltat * (a71 * X1[i] + a73 * X3[i] + a74 * X4[i] + a75 * X5[i] + a76 * X6[i]) for i in
-                   range(nvars)])
-
-        # Update concentrations using A1-A6 and P1-P6, coefficient for A7 and P7 is 0.
-        Xn_new = [X[i] + deltat * (b1 * X1[i] + b3 * X3[i] + b4 * X4[i] + b5 * X5[i] + b6 * X6[i]) for i in
-                  range(nvars)]  # b2/7=0
-
-        # Compute difference between fourth and fifth order
-        deltaXnerr = [np.max(np.abs(
-            (b1 - bs1) * X1[i] + (b3 - bs3) * X3[i] + (b4 - bs4) * X4[i] + (b5 - bs5) * X5[i] + (b6 - bs6) * X6[
-                i] - bs7 * X7[i])) for i in range(nvars)]  # b7 is zero
-
-        # Get maximum concentrations for An and Pn
-        yXn = [np.maximum(np.max(np.abs(Xn_new[i])), np.max(np.abs(X[i]))) for i in range(nvars)]
-
-        # Get error scale, combining relative and absolute error
-        scaleXn = [atol + yXn[i] * rtol for i in range(nvars)]
-
-        # Compute total error as norm of maximum errors for each species scaled by the error scale
-        errs = [(deltaXnerr[i] / scaleXn[i]) ** 2 for i in range(nvars)]
-        totalerror = np.sqrt(np.sum(errs) / nvars)
-
-        # Compute new timestep
-        # sometimes see "RuntimeWarning: divide by zero encountered in double_scalars". Need to look into
-        dtnew = 0.8 * deltat * np.abs(1 / totalerror) ** (1 / 5)
-
-        # Upper and lower bound for timestep to avoid changing too fast
-        if dtnew > maxstep:
-            dtnew = maxstep
-        elif dtnew < deltat / 5:
-            dtnew = deltat / 5
-
-        # Compute max percentage change
-        change = np.max([np.max(np.abs(X[i] - Xn_new[i]) / Xn_new[i]) * (60 / dtnew) for i in range(nvars)])
-
-        # Set timestep for next round
-        deltat = dtnew
+            totalerror = 0
+            step = dxdt(X)
+            Xn_new = [X[i] + deltat * step[i] for i in range(nvars)]
 
         # Accept step if error is on the order of error scale or below
         if totalerror < 1:
