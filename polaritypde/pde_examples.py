@@ -1,7 +1,7 @@
 import numpy as np
-from polaritymodel import pdeRK, diffusion
+from polaritypde import pdeRK, diffusion
 from scipy.integrate import odeint
-from . import ode
+import ode_examples as ode
 
 
 class GOR:
