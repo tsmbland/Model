@@ -1,7 +1,7 @@
 import numpy as np
-from .pdeRK import pdeRK
+from .pde import pdeRK
 from scipy.integrate import odeint
-import ode_examples as ode
+from . import ode_examples as ode
 
 
 def diffusion(concs, dx):

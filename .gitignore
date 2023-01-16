@@ -1,2 +1,5 @@
-.dist/
-.polarity_pde.egg-info/
+dist/
+polarity_pde.egg-info/
+scripts/_temp/
+scripts/_temp2/
+scripts/_temp3/

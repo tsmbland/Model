@@ -3,7 +3,7 @@ from pathlib import Path
 
 setup(
     name='polarity-pde',
-    version='0.1.0',
+    version='0.1.2',
     license="CC BY 4.0",
     author='Tom Bland',
     author_email='tom_bland@hotmail.co.uk',
@@ -12,6 +12,7 @@ setup(
                       'matplotlib',
                       'scipy',
                       'ipywidgets',
-                      'jupyter'],
+                      'jupyter',
+                      'pandas'],
     description='Tools for simulating one-dimensional cell polarity PDE models and performing parameter space analysis'
 )

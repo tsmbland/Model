@@ -3,7 +3,8 @@ from typing import Optional, Tuple
 
 
 def pdeRK(dxdt: callable, X0: list, Tmax: float, deltat: float, t_eval: np.ndarray, killfunc: Optional[callable] = None,
-          stabilitycheck: bool = False, maxstep: Optional[float] = None) -> Tuple[list, float, list, np.ndarray]:
+          stabilitycheck: bool = False, maxstep: Optional[float] = None, rk: bool = True) -> Tuple[
+    list, float, list, np.ndarray]:
     """
     Function for solving system of PDEs using adaptive Runge-Kutta method
     Adapted from Hubatsch et al., 2019 (see https://github.com/lhcgeneva/PARmodelling)
@@ -17,6 +18,7 @@ def pdeRK(dxdt: callable, X0: list, Tmax: float, deltat: float, t_eval: np.ndarr
         killfunc: optional func, takes same input as dxdt, integration will terminate when func returns True
         stabilitycheck: if True, will terminate integration when system changes by less that 1% per minute
         maxstep:
+        rk: if True will use Runge-Kutta method (otherwise standard Euler)
 
     Returns:
         X: final state
