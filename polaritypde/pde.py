@@ -10,21 +10,21 @@ def pdeRK(dxdt: callable, X0: list, Tmax: float, deltat: float, t_eval: np.ndarr
     Adapted from Hubatsch et al., 2019 (see https://github.com/lhcgeneva/PARmodelling)
 
     Args:
-        dxdt: function, takes list of 1D arrays corresponding to concentrations over space, returns list of gradients
-        X0: starting conditions, list of 1D arrays
-        Tmax: maximum time
-        deltat: initial timestep
-        t_eval: array of timepoints to save
-        killfunc: optional func, takes same input as dxdt, integration will terminate when func returns True
-        stabilitycheck: if True, will terminate integration when system changes by less that 1% per minute
-        maxstep:
-        rk: if True will use Runge-Kutta method (otherwise standard Euler)
+        dxdt: a function that takes list of 1D arrays (one for each species) corresponding to concentrations over space, and returns a list of gradient arrays
+        X0: a list specifying the initial state of the system. Will be used as the input to dxdt on the first time step
+        Tmax: timepoint at which to terminate simulation
+        deltat: initial timestep (this will be adapted throughout the simulation)
+        t_eval: a list of timepoints for which to save the state of the system
+        killfunc: an optional kill function that takes the same input as dxdt. Integration will terminate when this function returns True
+        stabilitycheck: if True, integration will terminate when the system stabilises (changes by less that 1% per 60 time units). Default is False
+        maxstep: maximum time step to tolerate
+        rk: if True, the function will use an adaptive Runge-Kutta method. If False, the function will use a basic Euler method with a constant time step
 
     Returns:
-        X: final state
-        time: final time
-        X_stored: saved states according to t_eval
-        t_stored: times corresponding to X_stored. Will not be exactly the same as t_eval but should be close
+        soln: final solution
+        time: final time. Will be close to Tmax but not exact due to finite and adaptable time step
+        solns: solutions at times specified by t_eval
+        times: times corresponding to saved states in solns. Will be close to times specified in t_eval but not exact due to finite and adaptable time step
 
     """
 
