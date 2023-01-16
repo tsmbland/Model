@@ -12,5 +12,6 @@ setup(
                       'matplotlib',
                       'scipy',
                       'ipywidgets',
-                      'jupyter']
+                      'jupyter'],
+    description='Tools for simulating one-dimensional cell polarity PDE models and performing parameter space analysis'
 )
