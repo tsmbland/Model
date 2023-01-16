@@ -1,4 +1,4 @@
-# polaritymodel
+# polarity-pde
 
 Functions for simulating cell polarity PDE models and performing parameter space analysis.
 
