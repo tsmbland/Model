@@ -1,7 +1,13 @@
 import numpy as np
-from polaritypde import pdeRK, diffusion
+from .pdeRK import pdeRK
 from scipy.integrate import odeint
 import ode_examples as ode
+
+
+def diffusion(concs, dx):
+    concs_ = np.r_[concs[0], concs, concs[-1]]  # Dirichlet boundary conditions
+    d = concs_[:-2] - 2 * concs_[1:-1] + concs_[2:]
+    return d / (dx ** 2)
 
 
 class GOR:
