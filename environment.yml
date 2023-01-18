@@ -12,4 +12,4 @@ dependencies:
   - pandas
   - pip
   - pip:
-      - polarity-pde=0.1.2
+      - polarity-pde==0.1.2
