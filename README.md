@@ -1,11 +1,14 @@
+# polarity-pde
+
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/tsmbland/polarity-pde/HEAD?filepath=%2Fscripts/INDEX.ipynb)
 [![CC BY 4.0][cc-by-shield]][cc-by]
-
-# polarity-pde
+[![PyPi version](https://badgen.net/pypi/v/polarity-pde/)](https://pypi.org/project/polarity-pde)
 
 Functions for simulating cell polarity PDE models and performing parameter space analysis.
 
 ## Install instructions
+
+    pip install polarity-pde
 
 ## Running notebooks
 
@@ -20,6 +23,8 @@ This work is licensed under a
 [![CC BY 4.0][cc-by-image]][cc-by]
 
 [cc-by]: http://creativecommons.org/licenses/by/4.0/
+
 [cc-by-image]: https://i.creativecommons.org/l/by/4.0/88x31.png
+
 [cc-by-shield]: https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg
 
