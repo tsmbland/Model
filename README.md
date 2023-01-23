@@ -1,6 +1,6 @@
 # polarity-pde
 
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/tsmbland/pde-rk/HEAD?filepath=%2Fscripts/INDEX.ipynb)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/tsmbland/pde-rk/HEAD?filepath=%2Fscripts/simulate_par.ipynb)
 [![CC BY 4.0][cc-by-shield]][cc-by]
 [![PyPi version](https://badgen.net/pypi/v/polarity-pde/)](https://pypi.org/project/pde-rk)
 
@@ -12,7 +12,8 @@ Functions for simulating PDE models with an adaptive Runge-Kutta scheme
 
 ## Running notebooks
 
-The repository contains an example notebook that demonstrates the method using the PAR polarity model (Goehring et al., 2011)
+The repository contains an example notebook that demonstrates the method using the PAR polarity model (Goehring et al.,
+2011)
 
 To run in the cloud, click 'launch binder' above.
 
@@ -33,8 +34,7 @@ To run on your local machine, follow these steps:
 
 &#8291;4. Open jupyter notebooks:
 
-    jupyter notebook scripts/INDEX.ipynb
-
+    jupyter notebook scripts/simulate_par.ipynb
 
 ## License
 
