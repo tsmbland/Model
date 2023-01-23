@@ -1,4 +1,4 @@
-# polarity-pde
+# pde-rk
 
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/tsmbland/pde-rk/HEAD?filepath=%2Fscripts/simulate_par.ipynb)
 [![CC BY 4.0][cc-by-shield]][cc-by]
@@ -32,7 +32,7 @@ To run on your local machine, follow these steps:
 
     conda activate pde-rk
 
-&#8291;4. Open jupyter notebooks:
+&#8291;4. Open jupyter notebook:
 
     jupyter notebook scripts/simulate_par.ipynb
 
