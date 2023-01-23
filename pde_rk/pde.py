@@ -2,8 +2,9 @@ import numpy as np
 from typing import Optional, Tuple
 
 
-def pdeRK(dxdt: callable, X0: list, Tmax: float, deltat: float, t_eval: np.ndarray, killfunc: Optional[callable] = None,
-          stabilitycheck: bool = False, maxstep: Optional[float] = None, rk: bool = True) -> Tuple[
+def pde_rk(dxdt: callable, X0: list, Tmax: float, deltat: float, t_eval: np.ndarray,
+           killfunc: Optional[callable] = None,
+           stabilitycheck: bool = False, maxstep: Optional[float] = None, rk: bool = True) -> Tuple[
     list, float, list, np.ndarray]:
     """
     Function for solving system of PDEs using adaptive Runge-Kutta method
