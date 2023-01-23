@@ -3,14 +3,11 @@ from pathlib import Path
 
 setup(
     name='pde-rk',
-    version='0.1.0',
+    version='0.1.1',
     license="CC BY 4.0",
     author='Tom Bland',
     author_email='tom_bland@hotmail.co.uk',
     packages=find_packages(),
-    install_requires=['numpy',
-                      'matplotlib',
-                      'scipy',
-                      'pandas'],
+    install_requires=['numpy'],
     description='Package for simulating one-dimensional PDE models with and adaptive Runge-Kutta scheme'
 )

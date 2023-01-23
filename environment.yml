@@ -6,10 +6,8 @@ dependencies:
   - python=3.7
   - numpy
   - matplotlib
-  - scipy
   - ipywidgets
   - jupyter
-  - pandas
   - pip
   - pip:
-      - polarity-pde==0.1.2
+      - pde-rk==0.1.1
