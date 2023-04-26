@@ -14,5 +14,8 @@ setup(
     install_requires=['numpy'],
     description='Package for simulating one-dimensional PDE models with and adaptive Runge-Kutta scheme',
     long_description=long_description,
-    long_description_content_type='text/markdown'
+    long_description_content_type='text/markdown',
+    project_urls={
+            "Source Code": "https://github.com/tsmbland/pde-rk",
+        }
 )
