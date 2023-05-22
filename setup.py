@@ -6,7 +6,7 @@ long_description = (this_directory / "README.md").read_text()
 
 setup(
     name='pde-rk',
-    version='0.1.2',
+    version='0.1.3',
     license="CC BY 4.0",
     author='Tom Bland',
     author_email='tom_bland@hotmail.co.uk',
@@ -16,6 +16,6 @@ setup(
     long_description=long_description,
     long_description_content_type='text/markdown',
     project_urls={
-            "Source Code": "https://github.com/tsmbland/pde-rk",
-        }
+        "Source Code": "https://github.com/tsmbland/pde-rk",
+    }
 )

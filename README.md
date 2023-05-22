@@ -12,28 +12,30 @@ Functions for simulating PDE models with an adaptive Runge-Kutta scheme
 
 ## Instructions
 
-The repository contains an example notebook that demonstrates the method using the PAR polarity model (Goehring et al., 2011)
+The repository contains an example notebook that demonstrates the method using the PAR polarity model (Goehring et al., 2011).
+To run the notebook interactively you have two options:
 
-To run in the cloud, click 'launch binder' above.
+#### Option 1: Cloud
 
-To run on your local machine, follow these steps:
+To run in the cloud, click the 'launch binder' button at the top. Please note that it may take several minutes to open the notebook
 
-&#8291;1. Clone the repository:
+#### Option 2: Local
 
-    git clone https://github.com/tsmbland/pde-rk.git
-    cd pde-rk
+Step 1: Open [Docker](https://www.docker.com/products/docker-desktop/) and pull the docker image (copy and paste into the terminal)
 
-&#8291;2. Create conda environment:
+    docker pull tsmbland/pde-rk
 
-    conda env create -f environment.yml
+Step 2: Run the docker container (copy and paste into the terminal)
 
-&#8291;3. Activate conda environment:
+    docker run -p 8888:8888 tsmbland/pde-rk
 
-    conda activate pde-rk
+This will print a URL for you to copy and paste into your web browser to open up Jupyter
 
-&#8291;4. Open jupyter notebook:
+Step 3: When finished, delete the container and image
+    
+    docker container prune -f
+    docker image rm tsmbland/pde-rk
 
-    jupyter notebook scripts/simulate_par.ipynb
 
 ## License
 
