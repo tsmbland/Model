@@ -19,7 +19,7 @@ To run the notebook interactively you have a few options:
 
 To run in the cloud using Binder, click here: [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/tsmbland/pde-rk/HEAD?filepath=%2Fscripts/simulate_par.ipynb)
 
-Please note that it may take several minutes to open the notebook
+(Please note that it may take several minutes to open the notebook)
 
 #### Option 2: Docker
 
