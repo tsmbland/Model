@@ -1,4 +1,4 @@
-name: polarity-pde
+name: pde-rk
 channels:
   - conda-forge
   - defaults
