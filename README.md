@@ -12,7 +12,7 @@ Functions for simulating PDE models with an adaptive Runge-Kutta scheme
 
 ## Instructions
 
-The repository contains an [example notebook](scripts/simulate_par.ipynb) that demonstrates the method using the PAR polarity model (Goehring et al., 2011).
+The repository contains an [example notebook](https://nbviewer.org/github/tsmbland/pde-rk/blob/master/scripts/simulate_par.ipynb) that demonstrates the method using the PAR polarity model (Goehring et al., 2011).
 To run the notebook interactively you have a few options:
 
 #### Option 1: Binder
