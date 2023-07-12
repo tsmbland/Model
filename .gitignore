@@ -5,3 +5,5 @@ scripts/_temp2/
 scripts/_temp3/
 scripts/.ipynb_checkpoints/
 pde_rk.egg-info/
+pde_rk/__pycache__
+.DS_Store
