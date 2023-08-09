@@ -1,9 +1,20 @@
+# Bytecode
+__pycache__/
+
+# Distribution/packaging
+build/
 dist/
-polarity_pde.egg-info/
-scripts/_temp/
-scripts/_temp2/
-scripts/_temp3/
-scripts/.ipynb_checkpoints/
-pde_rk.egg-info/
-pde_rk/__pycache__
+*.egg-info/
+
+# Unit tests
+.coverage
+.pytest_cache/
+
+# OS
 .DS_Store
+
+# IPython notebooks
+.ipynb_checkpoints
+
+# Temporary files
+scripts/_temp*/
