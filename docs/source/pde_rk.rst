@@ -1,4 +1,4 @@
-pde\rk package
+pde\_rk package
 =========================
 
 
