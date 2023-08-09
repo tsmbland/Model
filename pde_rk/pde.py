@@ -30,10 +30,17 @@ def pde_rk(
         rk: if True, the function will use an adaptive Runge-Kutta method. If False, the function will use a basic Euler method with a constant time step
 
     Returns:
-        soln: final solution
-        time: final time. Will be close to Tmax but not exact due to finite and adaptable time step
-        solns: solutions at times specified by t_eval
-        times: times corresponding to saved states in solns. Will be close to times specified in t_eval but not exact due to finite and adaptable time step
+        soln :
+            final solution
+
+        time :
+            final time. Will be close to Tmax but not exact due to finite and adaptable time step
+
+        solns :
+            solutions at times specified by t_eval
+
+        times :
+            times corresponding to saved states in solns. Will be close to times specified in t_eval but not exact due to finite and adaptable time step
 
     """
 

@@ -21,6 +21,7 @@ release = "0.1.5"
 
 extensions = ["sphinx.ext.autodoc", "sphinx.ext.napoleon"]
 autoapi_dirs = ["../../pde_rk"]
+napoleon_custom_sections = [("Returns", "params_style")]
 
 
 templates_path = ["_templates"]
