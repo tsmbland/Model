@@ -21,6 +21,15 @@ To run the notebook in Colab, click here:
   <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab" height=20/></a>
 
 
+## Publications
+
+This package has been used in the following publications: 
+
+Illukkumbura, R., Hirani, N., Borrego-Pinto, J., Bland, T., Ng, K., Hubatsch, L., McQuade, J., Endres, R.G., and Goehring, N.W. (2023). [Design principles for selective polarization of PAR proteins by cortical flows](https://rupress.org/jcb/article/222/8/e202209111/214138/Design-principles-for-selective-polarization-of). Journal of Cell Biology.
+
+Illukkumbura, Bland, T. and Goehring, N.W. (2020). [Patterning and polarization of cells by intracellular flows](https://www.sciencedirect.com/science/article/abs/pii/S0955067419300924?via=ihub). Current Opinion in Cell Biology.
+
+_To add your paper to this list, please use the issues form, or create a pull request_
 
 ## License
 
